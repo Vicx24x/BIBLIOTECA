@@ -8,7 +8,7 @@ if (isset($_SESSION['id_usuario'])) {
     exit();
 }
 
-require_once 'config/db.php';
+require_once 'db.php'; // Sin el "config/"
 
 $error_login = '';
 $mensaje_registro = '';
