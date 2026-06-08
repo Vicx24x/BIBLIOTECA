@@ -127,27 +127,33 @@ try {
         .badge-agotado { text-align: center; color: #e74c3c; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
-<body>
-    <?php include 'header.php'; ?>
+<?php include 'header.php'; ?>
+
+    <?php if (isset($_GET['msg'])): ?>
+        <div id="alerta-sistema" style="
+            background: <?php echo ($_GET['msg'] === 'prestamo_exitoso') ? '#d4edda' : '#f8d7da'; ?>;
+            color: <?php echo ($_GET['msg'] === 'prestamo_exitoso') ? '#155724' : '#721c24'; ?>;
+            border: 1px solid <?php echo ($_GET['msg'] === 'prestamo_exitoso') ? '#c3e6cb' : '#f5c6cb'; ?>;
+            padding: 15px; text-align: center; border-radius: 8px; margin: 20px auto; max-width: 800px; font-weight: bold;">
+            
+            <?php if ($_GET['msg'] === 'prestamo_exitoso'): ?>
+                <i class="fas fa-check-circle"></i> ¡Préstamo realizado con éxito! El ejemplar ha sido asignado a tu cuenta.
+            <?php else: ?>
+                <i class="fas fa-exclamation-triangle"></i> No fue posible realizar el préstamo. Intenta de nuevo.
+            <?php endif; ?>
+        </div>
+        <script>
+            // Hace que la alerta desaparezca después de 4 segundos
+            setTimeout(() => {
+                document.getElementById('alerta-sistema').style.display = 'none';
+            }, 4000);
+        </script>
+    <?php endif; ?>
     <div style="text-align:center;">
         <a href="dashboard.php" style="text-decoration: none; color: #7f8c8d; font-weight: bold; float: left;"><i class="fas fa-arrow-left"></i> Volver al Dashboard</a>
         <h1 style="color: #2c3e50; margin:0 ;">📖 Catálogo Digital</h1>
         <p style="color: #7f8c8d;">Explora nuestra colección y solicita o reserva tus libros</p>
     </div>
-
-    <?php echo $mensaje; ?>
-
-    <form class="search-container" method="GET" action="catalogo.php">
-        <input type="text" name="q" placeholder="Buscar por título o autor..." value="<?php echo htmlspecialchars($busqueda); ?>">
-        
-        <select name="categoria">
-            <option value="">Todas las categorías</option>
-            <?php foreach($categorias_disponibles as $cat): ?>
-                <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo ($filtro_cat === $cat) ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($cat); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
 
         <button type="submit"><i class="fas fa-search"></i> Buscar</button>
     </form>
