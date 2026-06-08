@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     $editorial = trim($_POST['editorial']);
     $categoria = trim($_POST['categoria']);
     $cantidad_copias = (int)$_POST['cantidad_copias']; // NUEVO: RF9
-    $portada_path = null;
+   $portada_path = ''; // Inicializamos como cadena vacía
 
     // Lógica para subir la imagen de portada
     if (isset($_FILES['portada']) && $_FILES['portada']['error'] === UPLOAD_ERR_OK) {
