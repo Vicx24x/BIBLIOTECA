@@ -22,6 +22,15 @@ $estado_ui = [
 ];
 // ─────────────────────────────────────────────
 
+// Leer estado proveniente de redirección externa (ej: procesar_prestamo.php → ?msg=prestamo_exitoso)
+if (!empty($_GET['msg']) && array_key_exists($_GET['msg'], $estado_ui)) {
+    $mensajes_externos = [
+        'prestamo_exitoso' => '¡Préstamo solicitado con éxito! Tienes 7 días para devolverlo.',
+    ];
+    $estado['tipo']    = $_GET['msg'];
+    $estado['mensaje'] = $mensajes_externos[$_GET['msg']] ?? '';
+}
+
 // Procesar Reserva (Backend integrado)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'reservar') {
     if (!isset($_SESSION['id_usuario'])) {
