@@ -30,51 +30,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     }
 }
 
-
-
-// 1. Averiguar en qué página estamos (por defecto es la 1)
-$pagina_actual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
-$libros_por_pagina = 12; // Mostrar 12 libros por pantalla
-$offset = ($pagina_actual - 1) * $libros_por_pagina;
-
-// 2. Consulta principal añadiendo LIMIT y OFFSET al final
-// (Asegúrate de mantener tu lógica de búsqueda WHERE si el usuario buscó algo)
-$sql = "SELECT * FROM libros LIMIT :limit OFFSET :offset";
-$stmt = $pdo->prepare($sql);
-
-// 3. Pasar los parámetros de forma segura (PDO exige que sean del tipo INT)
-$stmt->bindValue(':limit', $libros_por_pagina, PDO::PARAM_INT);
-$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-$stmt->execute();
-$libros = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Consultar categorías únicas para el filtro
+// Consultar categorías únicas para el menú de filtros
 $categorias_stmt = $pdo->query("SELECT DISTINCT categoria FROM libros WHERE categoria != ''");
 $categorias_disponibles = $categorias_stmt->fetchAll(PDO::FETCH_COLUMN);
 
-// Consultar libros con búsqueda y filtros
-try {
-    $busqueda = $_GET['q'] ?? ''; 
-    $filtro_cat = $_GET['categoria'] ?? '';
+// Capturar filtros y parámetros de paginación
+$busqueda = $_GET['q'] ?? ''; 
+$filtro_cat = $_GET['categoria'] ?? '';
+$pagina_actual = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
+$libros_por_pagina = 12; // Cantidad de libros por cuadrícula
+$offset = ($pagina_actual - 1) * $libros_por_pagina;
 
-    $sql = "SELECT l.*, 
-            (SELECT COUNT(*) FROM ejemplares e WHERE e.id_libro = l.id_libro AND e.estado = 'Disponible') as copias_disponibles 
-            FROM libros l WHERE 1=1";
+try {
+    // Construir condiciones SQL de forma dinámica
+    $where_sql = " WHERE 1=1";
     $params = [];
 
     if (!empty($busqueda)) {
-        $sql .= " AND (l.titulo LIKE :q OR l.autor LIKE :q)";
+        $where_sql .= " AND (l.titulo LIKE :q OR l.autor LIKE :q)";
         $params['q'] = "%$busqueda%";
     }
     if (!empty($filtro_cat)) {
-        $sql .= " AND l.categoria = :cat";
+        $where_sql .= " AND l.categoria = :cat";
         $params['cat'] = $filtro_cat;
     }
-    
-    $sql .= " ORDER BY l.titulo ASC";
+
+    // A. Obtener el total de libros que coinciden con los filtros (indispensable para calcular páginas)
+    $count_sql = "SELECT COUNT(*) FROM libros l" . $where_sql;
+    $stmt_count = $pdo->prepare($count_sql);
+    $stmt_count->execute($params);
+    $total_libros = $stmt_count->fetchColumn();
+    $total_paginas = ceil($total_libros / $libros_por_pagina);
+
+    // B. Consulta principal unificada: Filtros + Paginación
+    $sql = "SELECT l.*, 
+            (SELECT COUNT(*) FROM ejemplares e WHERE e.id_libro = l.id_libro AND e.estado = 'Disponible') as copias_disponibles 
+            FROM libros l" . $where_sql . " 
+            ORDER BY l.titulo ASC 
+            LIMIT :limit OFFSET :offset";
+            
     $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    $libros = $stmt->fetchAll();
+    
+    // Vincular variables del buscador/categorías
+    foreach ($params as $key => $val) {
+        $stmt->bindValue(":$key", $val);
+    }
+    // Vincular variables de la paginación forzando el tipo entero
+    $stmt->bindValue(':limit', $libros_por_pagina, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    
+    $stmt->execute();
+    $libros = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (PDOException $e) {
     die("Error al cargar el catálogo: " . $e->getMessage());
 }
@@ -183,5 +190,26 @@ try {
             </div>
         <?php endforeach; ?>
     </div>
+
+    <?php if ($total_paginas > 1): ?>
+    <div style="text-align: center; margin: 40px 0; padding-bottom: 20px;">
+        <?php 
+        // Generar la cadena de la URL manteniendo los parámetros de búsqueda activos
+        $url_base = "?q=" . urlencode($busqueda) . "&categoria=" . urlencode($filtro_cat) . "&pagina="; 
+        ?>
+
+        <?php if($pagina_actual > 1): ?>
+            <a href="<?php echo $url_base . ($pagina_actual - 1); ?>" style="background: #2c3e50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px;"><i class="fas fa-chevron-left"></i> Anterior</a>
+        <?php endif; ?>
+
+        <span style="font-weight: bold; color: #7f8c8d; font-size: 1.1rem;">
+            Página <?php echo $pagina_actual; ?> de <?php echo $total_paginas; ?>
+        </span>
+
+        <?php if($pagina_actual < $total_paginas): ?>
+            <a href="<?php echo $url_base . ($pagina_actual + 1); ?>" style="background: #2c3e50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-left: 15px;">Siguiente <i class="fas fa-chevron-right"></i></a>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
 </body>
 </html>
