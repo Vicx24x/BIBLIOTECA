@@ -30,6 +30,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     }
 }
 
+
+
+// 1. Averiguar en qué página estamos (por defecto es la 1)
+$pagina_actual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+$libros_por_pagina = 12; // Mostrar 12 libros por pantalla
+$offset = ($pagina_actual - 1) * $libros_por_pagina;
+
+// 2. Consulta principal añadiendo LIMIT y OFFSET al final
+// (Asegúrate de mantener tu lógica de búsqueda WHERE si el usuario buscó algo)
+$sql = "SELECT * FROM libros LIMIT :limit OFFSET :offset";
+$stmt = $pdo->prepare($sql);
+
+// 3. Pasar los parámetros de forma segura (PDO exige que sean del tipo INT)
+$stmt->bindValue(':limit', $libros_por_pagina, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
+$libros = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Consultar categorías únicas para el filtro
 $categorias_stmt = $pdo->query("SELECT DISTINCT categoria FROM libros WHERE categoria != ''");
 $categorias_disponibles = $categorias_stmt->fetchAll(PDO::FETCH_COLUMN);
