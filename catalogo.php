@@ -13,20 +13,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         $id_libro = (int)$_POST['id_libro'];
         $id_usuario = $_SESSION['id_usuario'];
         
-        try {
-            // Verificar si ya lo tiene reservado
-            $stmt_check = $pdo->prepare("SELECT id_reserva FROM reservas WHERE id_usuario = ? AND id_libro = ? AND estado = 'Pendiente'");
-            $stmt_check->execute([$id_usuario, $id_libro]);
-            if ($stmt_check->fetch()) {
-                $mensaje = "<div style='background:#fff3cd; color:#856404; padding:10px; text-align:center; margin-bottom:20px;'>Ya estás en la lista de espera para este libro.</div>";
-            } else {
-                $stmt_res = $pdo->prepare("INSERT INTO reservas (id_usuario, id_libro) VALUES (?, ?)");
-                $stmt_res->execute([$id_usuario, $id_libro]);
-                $mensaje = "<div style='background:#d4edda; color:#155724; padding:10px; text-align:center; margin-bottom:20px;'>¡Libro reservado con éxito! Te notificaremos cuando esté disponible.</div>";
-            }
-        } catch (PDOException $e) {
-            $mensaje = "<div style='background:#f8d7da; color:#721c24; padding:10px; text-align:center; margin-bottom:20px;'>Error al reservar.</div>";
-        }
+        // En tu bloque if (isset($_POST['accion']) && $_POST['accion'] === 'reservar')
+
+try {
+    $stmt_check = $pdo->prepare("SELECT id_reserva FROM reservas WHERE id_usuario = ? AND id_libro = ? AND estado = 'Pendiente'");
+    $stmt_check->execute([$id_usuario, $id_libro]);
+    
+    if ($stmt_check->fetch()) {
+        // AQUÍ ESTÁ EL CAMBIO: Redirigir con mensaje específico
+        header("Location: catalogo.php?msg=reserva_duplicada");
+        exit();
+    } else {
+        $stmt_res = $pdo->prepare("INSERT INTO reservas (id_usuario, id_libro) VALUES (?, ?)");
+        $stmt_res->execute([$id_usuario, $id_libro]);
+        header("Location: catalogo.php?msg=reserva_exitosa");
+        exit();
+    }
+} catch (PDOException $e) {
+    header("Location: catalogo.php?msg=error_reserva");
+    exit();
+}
     }
 }
 
@@ -129,27 +135,23 @@ try {
 </head>
 <?php include 'header.php'; ?>
 
-   <?php if (isset($_GET['msg'])): ?>
-    <div id="alerta-prestamo" style="
-        margin: 20px auto; 
-        max-width: 800px; 
-        padding: 15px; 
-        text-align: center; 
-        border-radius: 8px; 
-        font-weight: bold;
-        <?php echo ($_GET['msg'] === 'prestamo_exitoso') ? 'background:#d4edda; color:#155724; border: 1px solid #c3e6cb;' : 'background:#f8d7da; color:#721c24; border: 1px solid #f5c6cb;'; ?>">
+  <?php if (isset($_GET['msg'])): ?>
+    <div id="alerta-sistema" style="
+        padding: 15px; text-align: center; border-radius: 8px; margin: 20px auto; max-width: 800px; font-weight: bold;
+        <?php 
+            if ($_GET['msg'] === 'reserva_exitosa') echo 'background:#d4edda; color:#155724; border: 1px solid #c3e6cb;';
+            elseif ($_GET['msg'] === 'reserva_duplicada') echo 'background:#fff3cd; color:#856404; border: 1px solid #ffeeba;';
+            else echo 'background:#f8d7da; color:#721c24; border: 1px solid #f5c6cb;';
+        ?>">
         
-        <?php echo ($_GET['msg'] === 'prestamo_exitoso') ? 
-            '<i class="fas fa-check-circle"></i> ¡Préstamo realizado con éxito! El ejemplar ha sido asignado a tu cuenta.' : 
-            '<i class="fas fa-exclamation-triangle"></i> No fue posible procesar el préstamo.'; ?>
+        <?php 
+            if ($_GET['msg'] === 'reserva_exitosa') echo '<i class="fas fa-check-circle"></i> ¡Reserva exitosa! Te notificaremos.';
+            elseif ($_GET['msg'] === 'reserva_duplicada') echo '<i class="fas fa-info-circle"></i> Ya tienes este libro reservado.';
+            else echo '<i class="fas fa-exclamation-triangle"></i> Error al procesar tu solicitud.';
+        ?>
     </div>
-    
     <script>
-        // Ocultar automáticamente después de 4 segundos
-        setTimeout(() => {
-            const alerta = document.getElementById('alerta-prestamo');
-            if (alerta) alerta.style.display = 'none';
-        }, 4000);
+        setTimeout(() => { document.getElementById('alerta-sistema').style.display = 'none'; }, 4000);
     </script>
 <?php endif; ?>
 
