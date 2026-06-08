@@ -129,18 +129,29 @@ try {
 </head>
 <?php include 'header.php'; ?>
 
-    <?php if (isset($_GET['msg'])): ?>
-        <div id="alerta-sistema" style="background: <?php echo ($_GET['msg'] === 'prestamo_exitoso') ? '#d4edda' : '#f8d7da'; ?>; color: <?php echo ($_GET['msg'] === 'prestamo_exitoso') ? '#155724' : '#721c24'; ?>; border: 1px solid <?php echo ($_GET['msg'] === 'prestamo_exitoso') ? '#c3e6cb' : '#f5c6cb'; ?>; padding: 15px; text-align: center; border-radius: 8px; margin: 20px auto; max-width: 800px; font-weight: bold;">
-            <?php if ($_GET['msg'] === 'prestamo_exitoso'): ?>
-                <i class="fas fa-check-circle"></i> ¡Préstamo realizado con éxito!
-            <?php else: ?>
-                <i class="fas fa-exclamation-triangle"></i> No fue posible realizar el préstamo.
-            <?php endif; ?>
-        </div>
-        <script>
-            setTimeout(() => { document.getElementById('alerta-sistema').style.display = 'none'; }, 4000);
-        </script>
-    <?php endif; ?>
+   <?php if (isset($_GET['msg'])): ?>
+    <div id="alerta-prestamo" style="
+        margin: 20px auto; 
+        max-width: 800px; 
+        padding: 15px; 
+        text-align: center; 
+        border-radius: 8px; 
+        font-weight: bold;
+        <?php echo ($_GET['msg'] === 'prestamo_exitoso') ? 'background:#d4edda; color:#155724; border: 1px solid #c3e6cb;' : 'background:#f8d7da; color:#721c24; border: 1px solid #f5c6cb;'; ?>">
+        
+        <?php echo ($_GET['msg'] === 'prestamo_exitoso') ? 
+            '<i class="fas fa-check-circle"></i> ¡Préstamo realizado con éxito! El ejemplar ha sido asignado a tu cuenta.' : 
+            '<i class="fas fa-exclamation-triangle"></i> No fue posible procesar el préstamo.'; ?>
+    </div>
+    
+    <script>
+        // Ocultar automáticamente después de 4 segundos
+        setTimeout(() => {
+            const alerta = document.getElementById('alerta-prestamo');
+            if (alerta) alerta.style.display = 'none';
+        }, 4000);
+    </script>
+<?php endif; ?>
 
     <div style="text-align:center;">
         <a href="dashboard.php" style="text-decoration: none; color: #7f8c8d; font-weight: bold; float: left;"><i class="fas fa-arrow-left"></i> Volver al Dashboard</a>
