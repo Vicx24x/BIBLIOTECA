@@ -153,6 +153,62 @@ try {
         .btn-prestamo { background-color: #2ecc71; color: white; padding: 10px; border-radius: 5px; font-weight: bold; border: none; width: 100%; cursor: pointer;}
         .btn-reserva { background-color: #3498db; color: white; padding: 10px; border-radius: 5px; font-weight: bold; border: none; width: 100%; cursor: pointer;}
         .badge-agotado { text-align: center; color: #e74c3c; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; }
+
+        /* ── Toast flotante ── */
+        #toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 420px;
+            padding: 16px 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            opacity: 0;
+            transform: translateX(40px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            pointer-events: none;
+        }
+        #toast.visible {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+        #toast.hiding {
+            opacity: 0;
+            transform: translateX(40px);
+        }
+        #toast .toast-icono { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+        #toast .toast-texto { flex: 1; font-weight: 500; }
+        #toast .toast-cerrar {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 1;
+            opacity: 0.6;
+            padding: 0;
+            flex-shrink: 0;
+            color: inherit;
+            transition: opacity 0.2s;
+        }
+        #toast .toast-cerrar:hover { opacity: 1; }
+        #toast .toast-barra {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            border-radius: 0 0 10px 10px;
+            background: rgba(0,0,0,0.15);
+            animation: toast-progreso 4s linear forwards;
+        }
+        @keyframes toast-progreso { from { width: 100%; } to { width: 0%; } }
     </style>
 </head>
 <body>
@@ -164,13 +220,41 @@ try {
     </div>
 
     <?php
-    // ─── Renderizado del estado centralizado ───────────────────────────────────
+    // ─── Toast flotante centralizado ───────────────────────────────────────────
     if ($estado['tipo'] !== null):
         $ui = $estado_ui[$estado['tipo']] ?? ['bg' => '#e2e3e5', 'color' => '#383d41', 'icono' => 'ℹ️'];
     ?>
-        <div style="background:<?php echo $ui['bg']; ?>; color:<?php echo $ui['color']; ?>; padding:10px; text-align:center; margin-bottom:20px;">
-            <?php echo $ui['icono'] . ' ' . htmlspecialchars($estado['mensaje']); ?>
-        </div>
+    <div id="toast" style="background:<?php echo $ui['bg']; ?>; color:<?php echo $ui['color']; ?>;">
+        <span class="toast-icono"><?php echo $ui['icono']; ?></span>
+        <span class="toast-texto"><?php echo htmlspecialchars($estado['mensaje']); ?></span>
+        <button class="toast-cerrar" onclick="cerrarToast()" title="Cerrar">✕</button>
+        <div class="toast-barra"></div>
+    </div>
+    <script>
+        (function () {
+            var toast   = document.getElementById('toast');
+            var timerId = null;
+
+            function cerrarToast() {
+                clearTimeout(timerId);
+                toast.classList.add('hiding');
+                toast.addEventListener('transitionend', function () {
+                    toast.style.display = 'none';
+                }, { once: true });
+            }
+
+            // Exponer para el botón onclick
+            window.cerrarToast = cerrarToast;
+
+            // Mostrar con un frame de delay para que la transición CSS se active
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    toast.classList.add('visible');
+                    timerId = setTimeout(cerrarToast, 4000); // auto-cierre 4 s
+                });
+            });
+        })();
+    </script>
     <?php endif; ?>
     <!-- ─────────────────────────────────────────────────────────────────────── -->
 
