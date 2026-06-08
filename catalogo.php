@@ -142,14 +142,6 @@ try {
                          alt="<?php echo htmlspecialchars($libro['titulo']); ?>" 
                          style="width: 100%; height: 100%; object-fit: cover; display: block;">
                     
-                    <div class="fallback-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                </div>
-                <div class="book-info">
-                    <h3 class="book-title"><?php echo htmlspecialchars($libro['titulo']); ?></h3>
-                    <div class="book-author"><i class="fas fa-user-edit"></i> <?php echo htmlspecialchars($libro['autor']); ?></div>
-                    
                     <?php if($libro['copias_disponibles'] > 0): ?>
                         <div style="text-align: center; color: #27ae60; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">
                             <?php echo $libro['copias_disponibles']; ?> copias disponibles
