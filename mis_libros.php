@@ -12,9 +12,9 @@ if (!isset($_SESSION['id_usuario'])) {
 $id_usuario = $_SESSION['id_usuario'];
 
 try {
-    // Consulta SQL usando JOIN para unir Préstamos, Ejemplares y Libros
+    // CORRECCIÓN: Cambiamos l.portada por l.isbn
     $sql = "SELECT p.id_prestamo, p.fecha_prestamo, p.fecha_devolucion_esperada, p.estado, 
-                   l.titulo, l.autor, l.portada 
+                   l.titulo, l.autor, l.isbn 
             FROM prestamos p
             INNER JOIN ejemplares e ON p.id_ejemplar = e.id_ejemplar
             INNER JOIN libros l ON e.id_libro = l.id_libro
@@ -49,12 +49,13 @@ try {
         tr:hover { background-color: #fcfcfc; }
         
         .book-cell { display: flex; align-items: center; gap: 15px; }
-        .book-thumbnail { width: 50px; height: 75px; object-fit: cover; border-radius: 4px; background: #2c3e50; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; }
+        .book-thumbnail { width: 50px; height: 75px; object-fit: cover; border-radius: 4px; }
+        .fallback-icon { background: #2c3e50; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; width: 50px; height: 75px; border-radius: 4px; }
         
         .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
-        .badge-activo { background-color: #fff3cd; color: #856404; } /* Amarillo para activo/pendiente */
-        .badge-devuelto { background-color: #d4edda; color: #155724; } /* Verde para entregado */
-        .badge-vencido { background-color: #f8d7da; color: #721c24; } /* Rojo si ya pasó la fecha */
+        .badge-activo { background-color: #fff3cd; color: #856404; } 
+        .badge-devuelto { background-color: #d4edda; color: #155724; } 
+        .badge-vencido { background-color: #f8d7da; color: #721c24; } 
         
         .btn-back { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #3498db; font-weight: bold; }
         .btn-back:hover { color: #2980b9; }
@@ -85,13 +86,11 @@ try {
                             <td>
                                 <div class="book-cell">
                                     <?php 
-                                    $ruta_imagen = !empty($item['portada']) ? 'portadas/' . basename($item['portada']) : '';
-                                    if (empty($ruta_imagen) || !file_exists($ruta_imagen)): 
+                                    // CORRECCIÓN: Usamos el ISBN para cargar la portada como en el catálogo
+                                    $ruta_imagen = "https://covers.openlibrary.org/b/isbn/" . urlencode($item['isbn']) . "-M.jpg?default=404";
                                     ?>
-                                        <div class="book-thumbnail"><i class="fas fa-book"></i></div>
-                                    <?php else: ?>
-                                        <img src="<?php echo $ruta_imagen; ?>" alt="Portada" class="book-thumbnail">
-                                    <?php endif; ?>
+                                    <img src="<?php echo $ruta_imagen; ?>" alt="Portada" class="book-thumbnail" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="fallback-icon" style="display:none;"><i class="fas fa-book"></i></div>
                                     
                                     <div>
                                         <strong style="color: #2c3e50; display: block;"><?php echo htmlspecialchars($item['titulo']); ?></strong>
@@ -108,7 +107,6 @@ try {
                             <td>
                                 <?php
                                     $hoy = date('Y-m-d');
-                                    // Lógica visual para el estado del libro
                                     if ($item['estado'] === 'Devuelto') {
                                         echo '<span class="badge badge-devuelto"><i class="fas fa-check-circle"></i> Devuelto</span>';
                                     } elseif ($item['estado'] === 'Activo' && $item['fecha_devolucion_esperada'] < $hoy) {
