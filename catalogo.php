@@ -38,7 +38,7 @@ $categorias_disponibles = $categorias_stmt->fetchAll(PDO::FETCH_COLUMN);
 $busqueda = $_GET['q'] ?? ''; 
 $filtro_cat = $_GET['categoria'] ?? '';
 $pagina_actual = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
-$libros_por_pagina = 12; // Cantidad de libros por cuadrícula
+$libros_por_pagina = 10; // Cantidad de libros por cuadrícula
 $offset = ($pagina_actual - 1) * $libros_por_pagina;
 
 try {
