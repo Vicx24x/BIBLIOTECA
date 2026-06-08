@@ -37,6 +37,7 @@ $categorias_disponibles = $categorias_stmt->fetchAll(PDO::FETCH_COLUMN);
 // Capturar filtros y parámetros de paginación
 $busqueda = $_GET['q'] ?? ''; 
 $filtro_cat = $_GET['categoria'] ?? '';
+$letra = $_GET['letra'] ?? ''; // <-- NUEVA LÍNEA
 $pagina_actual = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
 $libros_por_pagina = 10; // Cantidad de libros por cuadrícula
 $offset = ($pagina_actual - 1) * $libros_por_pagina;
@@ -49,10 +50,15 @@ try {
     if (!empty($busqueda)) {
         $where_sql .= " AND (l.titulo LIKE :q OR l.autor LIKE :q)";
         $params['q'] = "%$busqueda%";
-    }
-    if (!empty($filtro_cat)) {
+   if (!empty($filtro_cat)) {
         $where_sql .= " AND l.categoria = :cat";
         $params['cat'] = $filtro_cat;
+    }
+    
+    // NUEVO BLOQUE: Filtro por letra inicial
+    if (!empty($letra)) {
+        $where_sql .= " AND l.titulo LIKE :letra";
+        $params['letra'] = $letra . '%'; // El '%' le dice a MySQL "cualquier cosa después de esta letra"
     }
 
     // A. Obtener el total de libros que coinciden con los filtros (indispensable para calcular páginas)
@@ -142,6 +148,18 @@ try {
 
         <button type="submit"><i class="fas fa-search"></i> Buscar</button>
     </form>
+    <div style="text-align: center; margin: 30px 0; font-size: 1.1rem;">
+        <a href="catalogo.php" style="margin: 0 8px; text-decoration: none; color: <?php echo empty($letra) ? '#e74c3c' : '#3498db'; ?>; font-weight: bold; padding-bottom: 2px; <?php echo empty($letra) ? 'border-bottom: 2px solid #e74c3c;' : ''; ?>">
+            Todos
+        </a>
+        
+        <?php foreach (range('A', 'Z') as $char): ?>
+            <a href="?letra=<?php echo $char; ?><?php echo !empty($filtro_cat) ? '&categoria='.urlencode($filtro_cat) : ''; ?>" 
+               style="margin: 0 8px; text-decoration: none; color: <?php echo ($letra === $char) ? '#e74c3c' : '#3498db'; ?>; font-weight: <?php echo ($letra === $char) ? 'bold' : 'normal'; ?>; padding-bottom: 2px; <?php echo ($letra === $char) ? 'border-bottom: 2px solid #e74c3c;' : ''; ?>">
+                <?php echo $char; ?>
+            </a>
+        <?php endforeach; ?>
+    </div>
 
     <div class="books-grid">
         <?php foreach ($libros as $libro): ?>
