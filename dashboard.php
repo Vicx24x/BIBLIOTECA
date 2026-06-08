@@ -96,6 +96,8 @@ try {
             <a href="dashboard.php" class="active"><i class="fas fa-home"></i> Inicio</a>
             <a href="catalogo.php"><i class="fas fa-search"></i> Catálogo Digital</a>
             
+            <a href="mis_libros.php"><i class="fas fa-book-open"></i> Mis Libros</a>
+            
             <?php if($rol_usuario === 'Administrador' || $rol_usuario === 'Bibliotecario'): ?>
                 <a href="prestamos.php"><i class="fas fa-exchange-alt"></i> Operaciones</a>
                 <a href="inventario.php"><i class="fas fa-boxes"></i> Inventario</a>
@@ -106,7 +108,7 @@ try {
                 <a href="reportes.php"><i class="fas fa-chart-pie"></i> Reportes</a>
             <?php endif; ?>
 
-            <a href="logout.php" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Salir</a>
+            <a href="cerrar_sesion.php" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Salir</a>
         </div>
 
         <div class="main-content">
@@ -119,6 +121,18 @@ try {
             </div>
 
             <div class="cards-grid">
+                
+                <div class="card-stat" style="border-top: 4px solid #3498db; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+                    <div style="background: #e8f4fd; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
+                        <i class="fas fa-book-reader" style="font-size: 1.6rem; color: #3498db;"></i>
+                    </div>
+                    <h3 style="margin: 0 0 5px 0; color: #2c3e50; font-size: 1.1rem; text-transform: none;">Mis Libros</h3>
+                    <p style="color: #7f8c8d; font-size: 0.8rem; margin: 0 0 15px 0;">Historial y fechas límite</p>
+                    <a href="mis_libros.php" style="display: inline-block; background: #3498db; color: white; padding: 8px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.85rem; transition: 0.2s;" onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
+                        Ver historial
+                    </a>
+                </div>
+
                 <div class="card-stat">
                     <div class="card-icon" style="background: linear-gradient(135deg, #2ecc71, #27ae60);"><i class="fas fa-book"></i></div>
                     <div class="card-info">
@@ -133,6 +147,7 @@ try {
                         <div class="number"><?php echo $total_prestamos; ?></div>
                     </div>
                 </div>
+                
                 <?php if($rol_usuario === 'Administrador'): ?>
                 <div class="card-stat">
                     <div class="card-icon" style="background: linear-gradient(135deg, #3498db, #2980b9);"><i class="fas fa-users"></i></div>
@@ -161,9 +176,9 @@ try {
                             <td><?php echo htmlspecialchars($fila['autor']); ?></td>
                             <td>
                                 <?php if($fila['copias_disponibles'] > 0): ?>
-                                    <span style="color: green; font-weight: bold;"><?php echo $fila['copias_disponibles']; ?> copia(s) libre(s)</span>
+                                    <span style="color: green; font-weight: bold;"><i class="fas fa-check-circle"></i> <?php echo $fila['copias_disponibles']; ?> copia(s) libre(s)</span>
                                 <?php else: ?>
-                                    <span style="color: red; font-weight: bold;">Agotado</span>
+                                    <span style="color: red; font-weight: bold;"><i class="fas fa-times-circle"></i> Agotado</span>
                                 <?php endif; ?>
                             </td>
                         </tr>
