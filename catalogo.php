@@ -124,18 +124,23 @@ try {
                 <div class="book-cover">
                     <span class="book-category"><?php echo htmlspecialchars($libro['categoria']); ?></span>
                     
-                    <?php 
+                  <?php 
                     $ruta_local = !empty($libro['portada']) ? 'portadas/' . basename($libro['portada']) : '';
+                    
+                    // 1. Verifica si subiste una imagen manual desde el módulo de Inventario
                     if (!empty($libro['portada']) && file_exists(__DIR__ . '/' . $ruta_local)) {
                         $ruta_imagen = $ruta_local; 
                     } else {
-                        $ruta_imagen = "https://covers.openlibrary.org/b/isbn/" . urlencode($libro['isbn']) . "-M.jpg?default=404";
+                        // 2. Si no hay, genera una portada dinámica con el título del libro
+                        // Usamos la API de Placehold.co para generar la imagen al vuelo
+                        $titulo_url = urlencode(mb_strimwidth($libro['titulo'], 0, 30, "...")); // Corta títulos muy largos
+                        $ruta_imagen = "https://placehold.co/400x600/2c3e50/ffffff?text=" . $titulo_url . "&font=Montserrat";
                     }
                     ?>
                     
                     <img src="<?php echo $ruta_imagen; ?>" 
                          alt="<?php echo htmlspecialchars($libro['titulo']); ?>" 
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                         style="width: 100%; height: 100%; object-fit: cover; display: block;">
                     
                     <div class="fallback-icon">
                         <i class="fas fa-book"></i>
