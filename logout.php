@@ -1,16 +1,10 @@
 <?php
 // cerrar_sesion.php
+session_start();      // Inicia la sesión para poder acceder a ella
+$_SESSION = array();  // Vacía el arreglo de variables de sesión
+session_destroy();    // Destruye la sesión en el servidor
 
-// 1. Reanudar la sesión existente
-session_start();
-
-// 2. Vaciar todas las variables de sesión
-$_SESSION = array();
-
-// 3. Destruir la sesión completamente en el servidor
-session_destroy();
-
-// 4. Redirigir al usuario de vuelta al login (index.php)
+// Redirige al usuario a la página de login (index.php)
 header("Location: index.php");
 exit();
 ?>
