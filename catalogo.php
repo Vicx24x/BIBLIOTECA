@@ -79,8 +79,9 @@ try {
     $params    = [];
 
     if (!empty($busqueda)) {
-        $where_sql    .= " AND (l.titulo LIKE :q OR l.autor LIKE :q)";
-        $params['q']   = "%$busqueda%";
+        $where_sql      .= " AND (l.titulo LIKE :q1 OR l.autor LIKE :q2)";
+        $params['q1']    = "%$busqueda%";
+        $params['q2']    = "%$busqueda%";
     }
 
     if (!empty($filtro_cat)) {
