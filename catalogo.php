@@ -3,100 +3,60 @@
 session_start();
 require_once 'config/db.php';
 
-$mensaje = '';
-
-// Procesar Reserva (Backend integrado)
+// 1. Procesar Acciones (Reserva)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'reservar') {
     if (!isset($_SESSION['id_usuario'])) {
-        $mensaje = "<div style='background:#f8d7da; color:#721c24; padding:10px; text-align:center; margin-bottom:20px;'>Debes iniciar sesión para reservar.</div>";
-    } else {
-        $id_libro = (int)$_POST['id_libro'];
-        $id_usuario = $_SESSION['id_usuario'];
-        
-        // En tu bloque if (isset($_POST['accion']) && $_POST['accion'] === 'reservar')
-
-try {
-    $stmt_check = $pdo->prepare("SELECT id_reserva FROM reservas WHERE id_usuario = ? AND id_libro = ? AND estado = 'Pendiente'");
-    $stmt_check->execute([$id_usuario, $id_libro]);
-    
-    if ($stmt_check->fetch()) {
-        // AQUÍ ESTÁ EL CAMBIO: Redirigir con mensaje específico
-        header("Location: catalogo.php?msg=reserva_duplicada");
-        exit();
-    } else {
-        $stmt_res = $pdo->prepare("INSERT INTO reservas (id_usuario, id_libro) VALUES (?, ?)");
-        $stmt_res->execute([$id_usuario, $id_libro]);
-        header("Location: catalogo.php?msg=reserva_exitosa");
+        header("Location: catalogo.php?msg=error_auth");
         exit();
     }
-} catch (PDOException $e) {
-    header("Location: catalogo.php?msg=error_reserva");
+    $id_libro = (int)$_POST['id_libro'];
+    $id_usuario = $_SESSION['id_usuario'];
+    try {
+        $stmt_check = $pdo->prepare("SELECT id_reserva FROM reservas WHERE id_usuario = ? AND id_libro = ? AND estado = 'Pendiente'");
+        $stmt_check->execute([$id_usuario, $id_libro]);
+        if ($stmt_check->fetch()) {
+            header("Location: catalogo.php?msg=reserva_duplicada");
+        } else {
+            $stmt_res = $pdo->prepare("INSERT INTO reservas (id_usuario, id_libro) VALUES (?, ?)");
+            $stmt_res->execute([$id_usuario, $id_libro]);
+            header("Location: catalogo.php?msg=reserva_exitosa");
+        }
+    } catch (PDOException $e) {
+        header("Location: catalogo.php?msg=error_reserva");
+    }
     exit();
 }
-    }
-}
 
-// Consultar categorías únicas para el menú de filtros
+// 2. Cargar datos
 $categorias_stmt = $pdo->query("SELECT DISTINCT categoria FROM libros WHERE categoria != ''");
 $categorias_disponibles = $categorias_stmt->fetchAll(PDO::FETCH_COLUMN);
 
-// Capturar filtros y parámetros de paginación
 $busqueda = $_GET['q'] ?? ''; 
 $filtro_cat = $_GET['categoria'] ?? '';
 $letra = $_GET['letra'] ?? '';
 $pagina_actual = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
-$libros_por_pagina = 10; // Cantidad de libros por cuadrícula
+$libros_por_pagina = 10;
 $offset = ($pagina_actual - 1) * $libros_por_pagina;
 
 try {
-    // Construir condiciones SQL de forma dinámica
     $where_sql = " WHERE 1=1";
     $params = [];
+    if (!empty($busqueda)) { $where_sql .= " AND (titulo LIKE :q OR autor LIKE :q)"; $params['q'] = "%$busqueda%"; }
+    if (!empty($filtro_cat)) { $where_sql .= " AND categoria = :cat"; $params['cat'] = $filtro_cat; }
+    if (!empty($letra)) { $where_sql .= " AND titulo LIKE :letra"; $params['letra'] = $letra . '%'; }
 
-    if (!empty($busqueda)) {
-        $where_sql .= " AND (l.titulo LIKE :q OR l.autor LIKE :q)";
-        $params['q'] = "%$busqueda%";
-    }
-    
-    if (!empty($filtro_cat)) {
-        $where_sql .= " AND l.categoria = :cat";
-        $params['cat'] = $filtro_cat;
-    }
-    
-    // Filtro por letra inicial
-    if (!empty($letra)) {
-        $where_sql .= " AND l.titulo LIKE :letra";
-        $params['letra'] = $letra . '%'; 
-    }
-
-    // A. Obtener el total de libros que coinciden con los filtros
-    $count_sql = "SELECT COUNT(*) FROM libros l" . $where_sql;
-    $stmt_count = $pdo->prepare($count_sql);
+    $stmt_count = $pdo->prepare("SELECT COUNT(*) FROM libros" . $where_sql);
     $stmt_count->execute($params);
-    $total_libros = $stmt_count->fetchColumn();
-    $total_paginas = ceil($total_libros / $libros_por_pagina);
+    $total_paginas = ceil($stmt_count->fetchColumn() / $libros_por_pagina);
 
-    // B. Consulta principal unificada: Filtros + Paginación
-    $sql = "SELECT l.*, 
-            (SELECT COUNT(*) FROM ejemplares e WHERE e.id_libro = l.id_libro AND e.estado = 'Disponible') as copias_disponibles 
-            FROM libros l" . $where_sql . " 
-            ORDER BY l.titulo ASC 
-            LIMIT :limit OFFSET :offset";
-            
+    $sql = "SELECT *, (SELECT COUNT(*) FROM ejemplares e WHERE e.id_libro = libros.id_libro AND e.estado = 'Disponible') as copias_disponibles 
+            FROM libros $where_sql ORDER BY titulo ASC LIMIT :limit OFFSET :offset";
     $stmt = $pdo->prepare($sql);
-    
-    // Vincular variables del buscador/categorías/letras
-    foreach ($params as $key => $val) {
-        $stmt->bindValue(":$key", $val);
-    }
-    
-    // Vincular variables de la paginación forzando el tipo entero
+    foreach ($params as $key => $val) $stmt->bindValue(":$key", $val);
     $stmt->bindValue(':limit', $libros_por_pagina, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-    
     $stmt->execute();
     $libros = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 } catch (PDOException $e) {
     die("Error al cargar el catálogo: " . $e->getMessage());
 }
@@ -105,157 +65,59 @@ try {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Digital - BiblioMPS</title>
+    <title>Catálogo Digital</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 40px; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 40px; }
+        .alerta { padding: 15px; text-align: center; border-radius: 8px; margin: 20px auto; max-width: 800px; font-weight: bold; }
         .search-container { margin: 20px auto; display: flex; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 30px; overflow: hidden; background: white; max-width: 800px; }
-        .search-container input { flex: 1; padding: 15px 25px; border: none; outline: none; font-size: 1rem; }
-        .search-container select { padding: 15px; border: none; outline: none; border-left: 1px solid #eee; background: white; cursor: pointer; }
-        .search-container button { padding: 15px 30px; background-color: #3498db; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .search-container button:hover { background-color: #2980b9; }
-        
+        .search-container input { flex: 1; padding: 15px; border: none; outline: none; }
+        .search-container button { padding: 15px 30px; background-color: #3498db; color: white; border: none; cursor: pointer; }
         .books-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 30px; margin-top: 40px; }
-        .book-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
-        
-        .book-cover { height: 300px; background: linear-gradient(135deg, #34495e, #2c3e50); color: white; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-        .book-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .book-cover .fallback-icon { font-size: 4rem; display: none; }
-        
-        .book-category { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; font-size: 0.7rem; padding: 4px 10px; border-radius: 15px; z-index: 10; }
-        .book-info { padding: 20px; flex: 1; display: flex; flex-direction: column; }
-        .book-title { font-size: 1.1rem; font-weight: bold; color: #2c3e50; margin: 0 0 10px 0; }
-        .book-author { color: #7f8c8d; font-size: 0.9rem; margin-bottom: 15px; flex: 1; }
-        
-        .btn-prestamo { background-color: #2ecc71; color: white; padding: 10px; border-radius: 5px; font-weight: bold; border: none; width: 100%; cursor: pointer;}
-        .btn-reserva { background-color: #3498db; color: white; padding: 10px; border-radius: 5px; font-weight: bold; border: none; width: 100%; cursor: pointer;}
-        .badge-agotado { text-align: center; color: #e74c3c; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; }
+        .book-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .btn-prestamo { background-color: #2ecc71; color: white; padding: 10px; border-radius: 5px; border: none; width: 100%; cursor: pointer; }
     </style>
 </head>
-<?php include 'header.php'; ?>
-
-  <?php if (isset($_GET['msg'])): ?>
-    <div id="alerta-sistema" style="
-        padding: 15px; text-align: center; border-radius: 8px; margin: 20px auto; max-width: 800px; font-weight: bold;
-        <?php 
-            if ($_GET['msg'] === 'reserva_exitosa') echo 'background:#d4edda; color:#155724; border: 1px solid #c3e6cb;';
-            elseif ($_GET['msg'] === 'reserva_duplicada') echo 'background:#fff3cd; color:#856404; border: 1px solid #ffeeba;';
-            else echo 'background:#f8d7da; color:#721c24; border: 1px solid #f5c6cb;';
-        ?>">
-        
-        <?php 
-            if ($_GET['msg'] === 'reserva_exitosa') echo '<i class="fas fa-check-circle"></i> ¡Reserva exitosa! Te notificaremos.';
-            elseif ($_GET['msg'] === 'reserva_duplicada') echo '<i class="fas fa-info-circle"></i> Ya tienes este libro reservado.';
-            else echo '<i class="fas fa-exclamation-triangle"></i> Error al procesar tu solicitud.';
-        ?>
-    </div>
-    <script>
-        setTimeout(() => { document.getElementById('alerta-sistema').style.display = 'none'; }, 4000);
-    </script>
-<?php endif; ?>
+<body>
+    <?php include 'header.php'; ?>
+    
+    <?php if (isset($_GET['msg'])): ?>
+        <div class="alerta" style="<?php echo (strpos($_GET['msg'], 'exitosa') !== false) ? 'background:#d4edda; color:#155724;' : 'background:#f8d7da; color:#721c24;'; ?>">
+            <?php 
+                $msgs = ['prestamo_exitoso'=>'Préstamo realizado.','reserva_exitosa'=>'Reserva exitosa.', 'reserva_duplicada'=>'Ya tienes este libro reservado.'];
+                echo $msgs[$_GET['msg']] ?? 'Error al procesar tu solicitud.'; 
+            ?>
+        </div>
+    <?php endif; ?>
 
     <div style="text-align:center;">
-        <a href="dashboard.php" style="text-decoration: none; color: #7f8c8d; font-weight: bold; float: left;"><i class="fas fa-arrow-left"></i> Volver al Dashboard</a>
-        <h1 style="color: #2c3e50; margin:0 ;">📖 Catálogo Digital</h1>
-        <p style="color: #7f8c8d;">Explora nuestra colección y solicita o reserva tus libros</p>
+        <h1>📖 Catálogo Digital</h1>
     </div>
 
     <form class="search-container" method="GET" action="catalogo.php">
-        <input type="text" name="q" placeholder="Buscar por título o autor..." value="<?php echo htmlspecialchars($busqueda); ?>">
-        
-        <select name="categoria">
-            <option value="">Todas las categorías</option>
-            <?php foreach($categorias_disponibles as $cat): ?>
-                <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo ($filtro_cat === $cat) ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($cat); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-        <button type="submit"><i class="fas fa-search"></i> Buscar</button>
+        <input type="text" name="q" placeholder="Buscar..." value="<?php echo htmlspecialchars($busqueda); ?>">
+        <button type="submit">Buscar</button>
     </form>
-    
-    <div style="text-align: center; margin: 30px 0; font-size: 1.1rem; flex-wrap: wrap; display: flex; justify-content: center; gap: 10px;">
-        <a href="catalogo.php" style="text-decoration: none; color: <?php echo empty($letra) ? '#e74c3c' : '#3498db'; ?>; font-weight: bold; padding-bottom: 2px; <?php echo empty($letra) ? 'border-bottom: 2px solid #e74c3c;' : ''; ?>">
-            Todos
-        </a>
-        
-        <?php foreach (range('A', 'Z') as $char): ?>
-            <a href="?letra=<?php echo $char; ?><?php echo !empty($filtro_cat) ? '&categoria='.urlencode($filtro_cat) : ''; ?>" 
-               style="text-decoration: none; color: <?php echo ($letra === $char) ? '#e74c3c' : '#3498db'; ?>; font-weight: <?php echo ($letra === $char) ? 'bold' : 'normal'; ?>; padding-bottom: 2px; <?php echo ($letra === $char) ? 'border-bottom: 2px solid #e74c3c;' : ''; ?>">
-                <?php echo $char; ?>
-            </a>
-        <?php endforeach; ?>
-    </div>
 
     <div class="books-grid">
         <?php foreach ($libros as $libro): ?>
             <div class="book-card">
-                <div class="book-cover">
-                    <span class="book-category"><?php echo htmlspecialchars($libro['categoria']); ?></span>
-                    
-                    <?php 
-                    $ruta_local = !empty($libro['portada']) ? 'portadas/' . basename($libro['portada']) : '';
-                    if (!empty($libro['portada']) && file_exists(__DIR__ . '/' . $ruta_local)) {
-                        $ruta_imagen = $ruta_local; 
-                    } else {
-                        $ruta_imagen = "https://covers.openlibrary.org/b/isbn/" . urlencode($libro['isbn']) . "-M.jpg?default=404";
-                    }
-                    ?>
-                    
-                    <img src="<?php echo $ruta_imagen; ?>" 
-                         alt="<?php echo htmlspecialchars($libro['titulo']); ?>" 
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    
-                    <div class="fallback-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                </div>
-                <div class="book-info">
-                    <h3 class="book-title"><?php echo htmlspecialchars($libro['titulo']); ?></h3>
-                    <div class="book-author"><i class="fas fa-user-edit"></i> <?php echo htmlspecialchars($libro['autor']); ?></div>
-                    
-                    <?php if($libro['copias_disponibles'] > 0): ?>
-                        <div style="text-align: center; color: #27ae60; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">
-                            <?php echo $libro['copias_disponibles']; ?> copias disponibles
-                        </div>
-                        <form action="procesar_prestamo.php" method="POST">
-                            <input type="hidden" name="id_libro" value="<?php echo $libro['id_libro']; ?>">
-                            <button type="submit" class="btn-prestamo"><i class="fas fa-hand-holding"></i> Solicitar Préstamo</button>
-                        </form>
-                    <?php else: ?>
-                        <div class="badge-agotado"><i class="fas fa-exclamation-circle"></i> Agotado temporalmente</div>
-                        <form action="catalogo.php" method="POST">
-                            <input type="hidden" name="accion" value="reservar">
-                            <input type="hidden" name="id_libro" value="<?php echo $libro['id_libro']; ?>">
-                            <button type="submit" class="btn-reserva"><i class="fas fa-clock"></i> Reservar Libro</button>
-                        </form>
-                    <?php endif; ?>
-                </div>
+                <h3><?php echo htmlspecialchars($libro['titulo']); ?></h3>
+                <p><?php echo htmlspecialchars($libro['autor']); ?></p>
+                <?php if($libro['copias_disponibles'] > 0): ?>
+                    <form action="procesar_prestamo.php" method="POST">
+                        <input type="hidden" name="id_libro" value="<?php echo $libro['id_libro']; ?>">
+                        <button type="submit" class="btn-prestamo">Solicitar Préstamo</button>
+                    </form>
+                <?php else: ?>
+                    <form action="catalogo.php" method="POST">
+                        <input type="hidden" name="accion" value="reservar">
+                        <input type="hidden" name="id_libro" value="<?php echo $libro['id_libro']; ?>">
+                        <button type="submit">Reservar</button>
+                    </form>
+                <?php endif; ?>
             </div>
         <?php endforeach; ?>
     </div>
-
-    <?php if ($total_paginas > 1): ?>
-    <div style="text-align: center; margin: 40px 0; padding-bottom: 20px;">
-        <?php 
-        // Generar la cadena de la URL manteniendo los parámetros de búsqueda activos
-        $url_base = "?q=" . urlencode($busqueda) . "&categoria=" . urlencode($filtro_cat) . "&letra=" . urlencode($letra) . "&pagina="; 
-        ?>
-
-        <?php if($pagina_actual > 1): ?>
-            <a href="<?php echo $url_base . ($pagina_actual - 1); ?>" style="background: #2c3e50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px;"><i class="fas fa-chevron-left"></i> Anterior</a>
-        <?php endif; ?>
-
-        <span style="font-weight: bold; color: #7f8c8d; font-size: 1.1rem;">
-            Página <?php echo $pagina_actual; ?> de <?php echo $total_paginas; ?>
-        </span>
-
-        <?php if($pagina_actual < $total_paginas): ?>
-            <a href="<?php echo $url_base . ($pagina_actual + 1); ?>" style="background: #2c3e50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-left: 15px;">Siguiente <i class="fas fa-chevron-right"></i></a>
-        <?php endif; ?>
-    </div>
-    <?php endif; ?>
 </body>
 </html>
