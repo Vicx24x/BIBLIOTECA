@@ -2,7 +2,6 @@
 // index.php - Pantalla de Acceso y Registro de Alumnos
 session_start();
 
-// Si el usuario ya tiene sesión activa, lo mandamos al Dashboard
 if (isset($_SESSION['id_usuario'])) {
     header("Location: dashboard.php");
     exit();
@@ -13,10 +12,8 @@ require_once 'config/db.php';
 $error_login = '';
 $mensaje_registro = '';
 
-// PROCESAR FORMULARIOS
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
     
-    // ─────────────── LOGICA 1: INICIO DE SESIÓN ───────────────
     if ($_POST['accion'] === 'login') {
         $boleta = htmlspecialchars($_POST['boleta']);
         $id_rol_seleccionado = (int)$_POST['id_rol'];
@@ -56,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
         }
     }
 
-    // ─────────────── LOGICA 2: REGISTRO DE ALUMNOS ───────────────
     if ($_POST['accion'] === 'registro_alumno') {
         $nombre = trim($_POST['nombre']);
         $boleta = trim($_POST['boleta']);
@@ -64,13 +60,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
         $password_plana = $_POST['password'];
 
         if (!preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$/", $nombre)) {
-            $mensaje_registro = "<div class='alert error'>Nombre inválido: No se permiten números ni símbolos.</div>";
+            $mensaje_registro = "error|Nombre inválido: No se permiten números ni símbolos.";
         } elseif (!preg_match("/^\d{10}$/", $boleta)) {
-            $mensaje_registro = "<div class='alert error'>La boleta debe tener exactamente 10 dígitos numéricos.</div>";
+            $mensaje_registro = "error|La boleta debe tener exactamente 10 dígitos numéricos.";
         } elseif (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
-            $mensaje_registro = "<div class='alert error'>El correo proporcionado no es válido.</div>";
+            $mensaje_registro = "error|El correo proporcionado no es válido.";
         } elseif (strlen($password_plana) < 6) {
-            $mensaje_registro = "<div class='alert error'>La contraseña debe tener al menos 6 caracteres.</div>";
+            $mensaje_registro = "error|La contraseña debe tener al menos 6 caracteres.";
         } else {
             $password_encriptada = password_hash($password_plana, PASSWORD_DEFAULT);
             try {
@@ -83,164 +79,359 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
                     'correo' => $correo, 
                     'password' => $password_encriptada
                 ]);
-                $mensaje_registro = "<div class='alert success'>¡Registro exitoso! Ya puedes iniciar sesión.</div>";
+                $mensaje_registro = "success|¡Registro exitoso! Ya puedes iniciar sesión.";
             } catch (PDOException $e) {
-                $mensaje_registro = "<div class='alert error'>Error: La boleta ya está registrada en el sistema.</div>";
+                $mensaje_registro = "error|La boleta o correo ya está registrado en el sistema.";
             }
         }
     }
 }
 
-// Obtener roles para el selector del login
 $roles = $pdo->query("SELECT * FROM roles ORDER BY id_rol ASC")->fetchAll();
+
+$reg_parts = $mensaje_registro ? explode('|', $mensaje_registro, 2) : ['',''];
+$reg_tipo = $reg_parts[0];
+$reg_msg  = $reg_parts[1] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso y Registro - Biblioteca UPIICSA</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Acceso — Biblioteca UPIICSA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        :root { --primary-dark: #850021; --accent: #bf2a2a; --success: #2ecc71; --bg-body: #f4f7f6; --white: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-body); margin: 0; }
-        
-        .page-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
-        
-        .login-content {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: var(--primary-dark);
-            padding: 40px 20px;
+        body {
+            font-family: 'DM Sans', 'Segoe UI', sans-serif;
+            background-color: var(--guinda-dark, #5a0016);
+            margin: 0;
+            min-height: 100vh;
         }
 
-        .container-split {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            background: var(--white);
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 900px;
+        /* ─── Login Layout ─── */
+        .login-bg {
+            min-height: calc(100vh - 110px);
+            background: linear-gradient(160deg, var(--guinda-dark,#5a0016) 0%, #2d000b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px 60px;
+            position: relative;
             overflow: hidden;
         }
-        
-        .login-side, .register-side { padding: 40px; display: flex; flex-direction: column; justify-content: center; }
-        .login-side { border-right: 1px solid #eee; }
-        .register-side { background-color: #fcfcfc; }
 
-        h2 { color: var(--primary-dark); margin: 0 0 5px 0; font-size: 1.6rem; }
-        .subtitle { color: #7f8c8d; margin: 0 0 25px 0; font-size: 0.95rem; }
-        
-        .form-group { margin-bottom: 18px; text-align: left; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: bold; color: #333; font-size: 0.85rem; }
-        .form-group input, .form-group select { width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .form-group input:focus, .form-group select:focus { border-color: var(--accent); outline: none; }
-        
-        .btn-submit { color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-blue { background-color: var(--accent); }
-        .btn-blue:hover { background-color: #2980b9; }
-        .btn-green { background-color: var(--success); }
-        .btn-green:hover { background-color: #27ae60; }
+        .login-bg::before {
+            content: '';
+            position: absolute;
+            width: 700px; height: 700px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+            top: -200px; right: -200px;
+            pointer-events: none;
+        }
+        .login-bg::after {
+            content: '';
+            position: absolute;
+            width: 500px; height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+            bottom: -150px; left: -100px;
+            pointer-events: none;
+        }
 
-        .alert { padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 0.88rem; font-weight: bold; }
-        .alert.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .login-card {
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.45);
+            width: 100%;
+            max-width: 960px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+            position: relative;
+            z-index: 2;
+        }
 
-        @media (max-width: 768px) {
-            .container-split { grid-template-columns: 1fr; }
-            .login-side { border-right: none; border-bottom: 1px solid #eee; }
+        /* ─── Left Panel ─── */
+        .panel-login {
+            padding: 48px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #fff;
+            position: relative;
+        }
+
+        .panel-divider {
+            position: absolute;
+            right: 0; top: 10%; bottom: 10%;
+            width: 1px;
+            background: linear-gradient(to bottom, transparent, #e5e7eb 30%, #e5e7eb 70%, transparent);
+        }
+
+        /* ─── Right Panel ─── */
+        .panel-register {
+            padding: 48px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: var(--cream, #fdf8f0);
+        }
+
+        /* ─── Panel titles ─── */
+        .panel-icon {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 18px;
+        }
+        .panel-icon.guinda { background: linear-gradient(135deg, var(--guinda,#850021), var(--guinda-dark,#5a0016)); color: #fff; }
+        .panel-icon.gold   { background: linear-gradient(135deg, var(--gold,#c9a84c), #a07830); color: #fff; }
+
+        .panel-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--guinda, #850021);
+            margin: 0 0 4px 0;
+            line-height: 1.2;
+        }
+        .panel-sub {
+            color: var(--text-muted, #6b7280);
+            font-size: 0.875rem;
+            margin: 0 0 28px 0;
+        }
+
+        /* ─── Alerts ─── */
+        .alert-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { opacity:0; transform: translateY(-8px); } to { opacity:1; transform: translateY(0); } }
+        .alert-box.error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-box.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .alert-box i { margin-top: 1px; flex-shrink: 0; }
+
+        /* ─── Form Elements ─── */
+        .form-group { margin-bottom: 16px; }
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: #fff;
+            color: #111827;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .form-control:focus {
+            border-color: var(--guinda, #850021);
+            box-shadow: 0 0 0 3px rgba(133,0,33,0.10);
+        }
+        .panel-register .form-control:focus {
+            border-color: var(--gold, #c9a84c);
+            box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+        }
+        .form-control::placeholder { color: #9ca3af; }
+
+        .input-icon-wrap { position: relative; }
+        .input-icon-wrap .form-control { padding-left: 40px; }
+        .input-icon-wrap .icon {
+            position: absolute;
+            left: 13px; top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+        .input-icon-wrap .form-control:focus ~ .icon,
+        .input-icon-wrap .form-control:focus + .icon { color: var(--guinda, #850021); }
+
+        /* ─── Buttons ─── */
+        .btn {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s ease;
+            margin-top: 4px;
+        }
+        .btn-guinda {
+            background: linear-gradient(135deg, var(--guinda,#850021) 0%, var(--guinda-dark,#5a0016) 100%);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(133,0,33,0.30);
+        }
+        .btn-guinda:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(133,0,33,0.40);
+        }
+        .btn-guinda:active { transform: translateY(0); }
+        
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold,#c9a84c) 0%, #a07830 100%);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(201,168,76,0.30);
+        }
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(201,168,76,0.40);
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 720px) {
+            .login-card { grid-template-columns: 1fr; max-width: 480px; }
+            .panel-divider { display: none; }
+            .panel-login { border-bottom: 1px solid #e5e7eb; }
         }
     </style>
 </head>
 <body>
+    <?php include 'header.php'; ?>
 
-    <div class="page-wrapper">
-        <?php include 'header.php'; ?>
-        
-        <div class="login-content">
-            <div class="container-split">
-                
-                <div class="login-side">
-                    <div style="text-align: center; margin-bottom: 15px;">
-                        <i class="fas fa-university" style="font-size: 2.5rem; color: var(--accent);"></i>
-                    </div>
-                    <h2>Biblioteca UPIICSA</h2>
-                    <p class="subtitle">Ingresa tus datos para continuar</p>
+    <div class="login-bg">
+        <div class="login-card">
 
-                    <?php if($error_login): ?>
-                        <div class="alert error"><i class="fas fa-exclamation-triangle"></i> <?php echo $error_login; ?></div>
-                    <?php endif; ?>
+            <!-- LOGIN -->
+            <div class="panel-login">
+                <div class="panel-divider"></div>
+                <div class="panel-icon guinda">
+                    <i class="fas fa-university"></i>
+                </div>
+                <h2 class="panel-title">Iniciar Sesión</h2>
+                <p class="panel-sub">Ingresa tus credenciales para acceder al sistema</p>
 
-                    <form action="index.php" method="POST">
-                        <input type="hidden" name="accion" value="login">
-                        
-                        <div class="form-group">
-                            <label>No. de Boleta</label>
-                            <input type="text" name="boleta" required placeholder="Ej. 2021600123">
+                <?php if($error_login): ?>
+                <div class="alert-box error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span><?php echo htmlspecialchars($error_login); ?></span>
+                </div>
+                <?php endif; ?>
+
+                <form action="index.php" method="POST" autocomplete="off">
+                    <input type="hidden" name="accion" value="login">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Número de Boleta</label>
+                        <div class="input-icon-wrap">
+                            <input type="text" name="boleta" class="form-control" required placeholder="Ej. 2021600123" maxlength="10">
+                            <i class="fas fa-id-card icon"></i>
                         </div>
-                        
-                        <div class="form-group">
-                            <label>Rol de Acceso</label>
-                            <select name="id_rol" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Rol de Acceso</label>
+                        <div class="input-icon-wrap">
+                            <select name="id_rol" class="form-control" required style="padding-left:40px; appearance:none; cursor:pointer;">
                                 <?php foreach($roles as $rol): ?>
                                     <option value="<?php echo $rol['id_rol']; ?>"><?php echo htmlspecialchars($rol['nombre_rol']); ?></option>
                                 <?php endforeach; ?>
                             </select>
+                            <i class="fas fa-user-tag icon"></i>
                         </div>
-                        
-                        <div class="form-group">
-                            <label>Contraseña</label>
-                            <input type="password" name="password" required placeholder="********">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Contraseña</label>
+                        <div class="input-icon-wrap">
+                            <input type="password" name="password" class="form-control" required placeholder="••••••••">
+                            <i class="fas fa-lock icon"></i>
                         </div>
-                        
-                        <button type="submit" class="btn-submit btn-blue">Ingresar al Sistema</button>
-                    </form>
-                </div>
-
-                <div class="register-side">
-                    <h2>¿No te has registrado?</h2>
-                    <p class="subtitle">Ingresa tus datos como alumno para darte de alta</p>
-
-                    <?php echo $mensaje_registro; ?>
-
-                    <form action="index.php" method="POST">
-                        <input type="hidden" name="accion" value="registro_alumno">
-                        
-                        <div class="form-group">
-                            <label>Nombre Completo</label>
-                            <input type="text" name="nombre" required 
-                                   pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+" 
-                                   title="El nombre solo debe contener letras y espacios."
-                                   placeholder="Ej. Carlos Gómez">
-                        </div>
-
-                        <div class="form-group">
-                            <label>Número de Boleta</label>
-                            <input type="text" name="boleta" required 
-                                   pattern="\d{10}" 
-                                   title="La boleta debe tener exactamente 10 números."
-                                   placeholder="Ej. 2021600123" maxlength="10">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Correo Institucional</label>
-                            <input type="email" name="correo" required placeholder="alumno@alumno.ipn.mx">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Establecer Contraseña</label>
-                            <input type="password" name="password" required placeholder="Mínimo 6 caracteres">
-                        </div>
-                        
-                        <button type="submit" class="btn-submit btn-green"><i class="fas fa-user-plus"></i> Registrarme como Alumno</button>
-                    </form>
-                </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-guinda">
+                        <i class="fas fa-sign-in-alt"></i> Ingresar al Sistema
+                    </button>
+                </form>
             </div>
+
+            <!-- REGISTRO -->
+            <div class="panel-register">
+                <div class="panel-icon gold">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <h2 class="panel-title" style="color: #92400e;">¿Nuevo alumno?</h2>
+                <p class="panel-sub">Crea tu cuenta para solicitar préstamos de libros</p>
+
+                <?php if($reg_tipo): ?>
+                <div class="alert-box <?php echo $reg_tipo; ?>">
+                    <i class="fas fa-<?php echo $reg_tipo === 'success' ? 'check-circle' : 'times-circle'; ?>"></i>
+                    <span><?php echo htmlspecialchars($reg_msg); ?></span>
+                </div>
+                <?php endif; ?>
+
+                <form action="index.php" method="POST" autocomplete="off">
+                    <input type="hidden" name="accion" value="registro_alumno">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nombre Completo</label>
+                        <div class="input-icon-wrap">
+                            <input type="text" name="nombre" class="form-control" required
+                                   pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+"
+                                   title="Solo letras y espacios."
+                                   placeholder="Ej. Carlos Gómez Pérez">
+                            <i class="fas fa-user icon"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Número de Boleta</label>
+                        <div class="input-icon-wrap">
+                            <input type="text" name="boleta" class="form-control" required
+                                   pattern="\d{10}" title="10 dígitos numéricos."
+                                   placeholder="Ej. 2021600123" maxlength="10">
+                            <i class="fas fa-hashtag icon"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Correo Institucional</label>
+                        <div class="input-icon-wrap">
+                            <input type="email" name="correo" class="form-control" required placeholder="alumno@alumno.ipn.mx">
+                            <i class="fas fa-envelope icon"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Contraseña</label>
+                        <div class="input-icon-wrap">
+                            <input type="password" name="password" class="form-control" required placeholder="Mínimo 6 caracteres">
+                            <i class="fas fa-key icon"></i>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-gold">
+                        <i class="fas fa-user-plus"></i> Registrarme como Alumno
+                    </button>
+                </form>
+            </div>
+
         </div>
     </div>
-
 </body>
 </html>
