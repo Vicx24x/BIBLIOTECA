@@ -1,6 +1,6 @@
 <?php
 // =============================================================================
-// procesar_devolucion_v2.php  —  DEVOLUCIÓN + ENTREGA EXTEMPORÁNEA
+// procesar_devolucion.php  —  DEVOLUCIÓN + ENTREGA EXTEMPORÁNEA
 // =============================================================================
 // Sustituye a procesar_devolucion.php.
 // Cambios clave:
@@ -185,7 +185,7 @@ try {
 
 } catch (PDOException $e) {
     $pdo->rollBack();
-    error_log("[BiblioMPS][procesar_devolucion_v2] " . $e->getMessage());
+    error_log("[BiblioMPS][procesar_devolucion] " . $e->getMessage());
     header("Location: gestionar_prestamos.php?msg=error_devolucion");
     exit();
 }
