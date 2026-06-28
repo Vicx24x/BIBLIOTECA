@@ -9,20 +9,17 @@ require_once 'config/db.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // 3. Recibir y limpiar los datos
-    // htmlspecialchars evita inyecciones de código HTML/JS (Cross-Site Scripting)
     $nombre = htmlspecialchars(trim($_POST['nombre']));
-    $boleta = htmlspecialchars(trim($_POST['boleta'])); // <-- NUEVO: Capturar boleta
+    $boleta = htmlspecialchars(trim($_POST['boleta'])); 
     $correo = filter_var($_POST['correo'], FILTER_SANITIZE_EMAIL);
     $password_plana = $_POST['password'];
     $id_rol = (int)$_POST['id_rol'];
 
-    // 4. Cumplimiento de Seguridad (RNF21): Cifrar la contraseña
-    // PASSWORD_DEFAULT usa el algoritmo bcrypt, el estándar actual de PHP
+    // 4. Cifrar la contraseña
     $password_encriptada = password_hash($password_plana, PASSWORD_DEFAULT);
 
-    // 5. Preparar la consulta SQL (PDO con sentencias preparadas evita Inyección SQL)
+    // 5. Preparar la consulta SQL
     try {
-        // <-- NUEVO: Agregar 'boleta' a la consulta de inserción
         $sql = "INSERT INTO usuarios (nombre, boleta, correo, password, id_rol, estado) 
                 VALUES (:nombre, :boleta, :correo, :password, :id_rol, 'Activo')";
         
@@ -30,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Vincular los parámetros
         $stmt->bindParam(':nombre', $nombre);
-        $stmt->bindParam(':boleta', $boleta); // <-- NUEVO: Vincular la boleta a la base de datos
+        $stmt->bindParam(':boleta', $boleta); 
         $stmt->bindParam(':correo', $correo);
         $stmt->bindParam(':password', $password_encriptada);
         $stmt->bindParam(':id_rol', $id_rol);
@@ -38,15 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Ejecutar la consulta
         $stmt->execute();
 
-        // 6. Si todo sale bien, redirigir de vuelta a la tabla con un mensaje de éxito
+        // 6. Redirigir de vuelta a la tabla con un mensaje de éxito
         header("Location: usuarios.php?registro=exito");
         exit();
 
-   } catch (PDOException $e) {
-        // Si el correo O LA BOLETA ya existen, MySQL lanzará un error de clave duplicada (código 23000)
+    } catch (PDOException $e) {
+        // Si el correo O LA BOLETA ya existen
         if ($e->getCode() == 23000) {
             
-            // Creamos una pantalla de error estilizada con CSS
             $error_html = "
             <!DOCTYPE html>
             <html lang='es'>
@@ -83,4 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             die("<div style='font-family:sans-serif; padding:40px; text-align:center;'><h2>Error crítico en la base de datos</h2><p>" . $e->getMessage() . "</p></div>");
         }
     }
+} else {
+    // Si intentan entrar directo a la URL
+    header("Location: usuarios.php");
+    exit();
+}
 ?>
