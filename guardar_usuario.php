@@ -10,7 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // 3. Recibir y limpiar los datos
     // htmlspecialchars evita inyecciones de código HTML/JS (Cross-Site Scripting)
-    $nombre = htmlspecialchars($_POST['nombre']);
+    $nombre = htmlspecialchars(trim($_POST['nombre']));
+    $boleta = htmlspecialchars(trim($_POST['boleta'])); // <-- NUEVO: Capturar boleta
     $correo = filter_var($_POST['correo'], FILTER_SANITIZE_EMAIL);
     $password_plana = $_POST['password'];
     $id_rol = (int)$_POST['id_rol'];
@@ -21,13 +22,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 5. Preparar la consulta SQL (PDO con sentencias preparadas evita Inyección SQL)
     try {
-        $sql = "INSERT INTO usuarios (nombre, correo, password, id_rol, estado) 
-                VALUES (:nombre, :correo, :password, :id_rol, 'Activo')";
+        // <-- NUEVO: Agregar 'boleta' a la consulta de inserción
+        $sql = "INSERT INTO usuarios (nombre, boleta, correo, password, id_rol, estado) 
+                VALUES (:nombre, :boleta, :correo, :password, :id_rol, 'Activo')";
         
         $stmt = $pdo->prepare($sql);
         
         // Vincular los parámetros
         $stmt->bindParam(':nombre', $nombre);
+        $stmt->bindParam(':boleta', $boleta); // <-- NUEVO: Vincular la boleta a la base de datos
         $stmt->bindParam(':correo', $correo);
         $stmt->bindParam(':password', $password_encriptada);
         $stmt->bindParam(':id_rol', $id_rol);
@@ -40,9 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
 
     } catch (PDOException $e) {
-        // Si el correo ya existe, MySQL lanzará un error de clave duplicada (código 23000)
+        // Si el correo O LA BOLETA ya existen, MySQL lanzará un error de clave duplicada (código 23000)
         if ($e->getCode() == 23000) {
-            die("❌ Error: El correo electrónico '$correo' ya está registrado en el sistema. <a href='usuarios.php'>Volver</a>");
+            die("❌ Error: El correo electrónico '$correo' o la boleta '$boleta' ya están registrados en el sistema. <a href='usuarios.php'>Volver al inicio</a>");
         } else {
             die("❌ Error crítico en la base de datos: " . $e->getMessage());
         }
