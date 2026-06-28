@@ -99,7 +99,47 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
         .form-control:focus { border-color: var(--guinda,#850021); box-shadow: 0 0 0 3px rgba(133,0,33,0.10); }
         .btn-save { width: 100%; padding: 13px; background: linear-gradient(135deg,var(--guinda,#850021),#5a0016); color: #fff; border: none; border-radius: 10px; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
         .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(133,0,33,0.35); }
+
+
+        /* ─── Estilos para Botones de Acción ─── */
+.btn-activar, .btn-desactivar {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-activar {
+    background-color: #10b981; /* Verde esmeralda */
+}
+
+.btn-activar:hover {
+    background-color: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+}
+
+.btn-desactivar {
+    background-color: #ef4444; /* Rojo peligro */
+}
+
+.btn-desactivar:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+}
     </style>
+    
+    
 </head>
     <?php if (isset($_GET['update']) && $_GET['update'] === 'exito'): ?>
     <div id="toast" style="position: fixed; top: 20px; right: 20px; background: #065f46; color: white; padding: 15px 25px; border-radius: 10px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.5s ease;">
@@ -184,9 +224,10 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
 </button>
                                 <form action="acciones_usuario.php" method="POST" style="display:inline-block;">
     <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
-    <input type="hidden" name="id_usuario" value="<?php echo $u['id_usuario']; ?>">
     
-    <?php if($u['estado'] === 'Activo'): ?>
+    <input type="hidden" name="id_usuario" value="<?php echo $usuario['id_usuario']; ?>">
+    
+    <?php if($usuario['estado'] === 'Activo'): ?>
         <input type="hidden" name="accion" value="desactivar">
         <button type="submit" class="btn-desactivar" onclick="return confirm('¿Desactivar esta cuenta?');">
             <i class="fas fa-ban"></i> Desactivar
