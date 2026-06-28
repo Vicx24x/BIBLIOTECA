@@ -42,17 +42,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: usuarios.php?registro=exito");
         exit();
 
-    } catch (PDOException $e) {
+   } catch (PDOException $e) {
         // Si el correo O LA BOLETA ya existen, MySQL lanzará un error de clave duplicada (código 23000)
         if ($e->getCode() == 23000) {
-            die("❌ Error: El correo electrónico '$correo' o la boleta '$boleta' ya están registrados en el sistema. <a href='usuarios.php'>Volver al inicio</a>");
+            
+            // Creamos una pantalla de error estilizada con CSS
+            $error_html = "
+            <!DOCTYPE html>
+            <html lang='es'>
+            <head>
+                <meta charset='UTF-8'>
+                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                <title>Error de Registro</title>
+                <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css'>
+                <style>
+                    body { font-family: 'DM Sans', 'Segoe UI', sans-serif; background: #f5f3ef; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+                    .error-card { background: #fff; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center; max-width: 450px; border-top: 6px solid #850021; }
+                    .error-icon { font-size: 3.5rem; color: #dc2626; margin-bottom: 20px; }
+                    h2 { color: #111827; margin-top: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; }
+                    p { color: #4b5563; font-size: 0.95rem; line-height: 1.6; margin-bottom: 25px; }
+                    strong { color: #111827; }
+                    .btn-back { display: inline-flex; align-items: center; gap: 8px; background: #850021; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; transition: background 0.2s; box-shadow: 0 4px 12px rgba(133,0,33,0.2); }
+                    .btn-back:hover { background: #5a0016; transform: translateY(-2px); }
+                </style>
+            </head>
+            <body>
+                <div class='error-card'>
+                    <i class='fas fa-times-circle error-icon'></i>
+                    <h2>¡Datos Duplicados!</h2>
+                    <p>El correo electrónico <strong>$correo</strong> o la boleta <strong>$boleta</strong> ya se encuentran registrados en la base de datos.</p>
+                    <a href='usuarios.php' class='btn-back'><i class='fas fa-arrow-left'></i> Volver al directorio</a>
+                </div>
+            </body>
+            </html>
+            ";
+            
+            die($error_html);
+            
         } else {
-            die("❌ Error crítico en la base de datos: " . $e->getMessage());
+            die("<div style='font-family:sans-serif; padding:40px; text-align:center;'><h2>Error crítico en la base de datos</h2><p>" . $e->getMessage() . "</p></div>");
         }
     }
-} else {
-    // Si alguien intenta entrar a este archivo escribiendo la URL directamente, lo regresamos
-    header("Location: usuarios.php");
-    exit();
-}
 ?>
