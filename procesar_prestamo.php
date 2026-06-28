@@ -1,6 +1,6 @@
 <?php
 // =============================================================================
-// procesar_prestamo_v2.php  —  SOLICITUD DE PRÉSTAMO (VERSIÓN AUDITADA)
+// procesar_prestamo.php  —  SOLICITUD DE PRÉSTAMO (VERSIÓN AUDITADA)
 // =============================================================================
 // Mejoras sobre procesar_prestamo.php original:
 //   [SEC-01] Token CSRF obligatorio.
@@ -164,7 +164,7 @@ try {
         $pdo->rollBack();
     }
     // [BUG-01] No exponer errores de BD al usuario final
-    error_log("[BiblioMPS][procesar_prestamo_v2] " . $e->getMessage());
+    error_log("[BiblioMPS][procesar_prestamo] " . $e->getMessage());
     header("Location: catalogo.php?msg=error_servidor");
     exit();
 }
