@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config/db.php';
+require_once 'csrf_helper.php';
 
 if (!isset($_SESSION['id_usuario']) || $_SESSION['rol'] !== 'Administrador') {
     header("Location: dashboard.php");
