@@ -15,7 +15,6 @@
 session_start();
 require_once 'config/db.php';
 require_once 'csrf_helper.php';
-require_once 'rate_limiter.php';
 require_once 'notificaciones.php';
 
 // ── 1. Autenticación ─────────────────────────────────────────────────────────
