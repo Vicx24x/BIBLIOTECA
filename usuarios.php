@@ -8,7 +8,7 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['rol'] !== 'Administrador') {
 }
 
 try {
-    $sql = "SELECT u.id_usuario, u.nombre, u.correo, u.boleta, u.estado, r.nombre_rol 
+   $sql = "SELECT u.id_usuario, u.nombre, u.correo, u.boleta, u.estado, u.id_rol, r.nombre_rol 
             FROM usuarios u 
             INNER JOIN roles r ON u.id_rol = r.id_rol
             ORDER BY u.id_usuario DESC";
