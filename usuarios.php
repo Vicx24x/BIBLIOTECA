@@ -28,6 +28,7 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Usuarios — Biblioteca UPIICSA</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { font-family: 'DM Sans','Segoe UI',sans-serif; background: #f5f3ef; margin: 0; color: #1a1a2e; }
         .page-wrap { max-width: 1200px; margin: 0 auto; padding: 36px 32px 60px; }
