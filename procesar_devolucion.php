@@ -14,6 +14,8 @@
 
 session_start();
 require_once 'config/db.php';
+require_once 'csrf_helper.php';
+require_once 'notificaciones.php';
 
 // ── 1. Autenticación ─────────────────────────────────────────────────────────
 if (!isset($_SESSION['id_usuario'])) {
@@ -148,7 +150,32 @@ try {
 
     $pdo->commit();
 
-    // 5g. Redirección con contexto
+    // 5g. Enviar correo de notificación (tras el commit, fail-safe)
+    $stmt_user = $pdo->prepare(
+        "SELECT nombre, correo FROM usuarios WHERE id_usuario = :id LIMIT 1"
+    );
+    $stmt_user->execute(['id' => (int)$prestamo['id_usuario']]);
+    $user_data = $stmt_user->fetch(PDO::FETCH_ASSOC);
+
+    $stmt_libro = $pdo->prepare(
+        "SELECT l.titulo FROM libros l
+         INNER JOIN ejemplares e ON e.id_libro = l.id_libro
+         WHERE e.id_ejemplar = :id LIMIT 1"
+    );
+    $stmt_libro->execute(['id' => $id_ejemplar]);
+    $libro_data = $stmt_libro->fetch(PDO::FETCH_ASSOC);
+
+    if ($user_data && $libro_data && $es_extemporanea) {
+        notificar_devolucion_extemporanea(
+            correo_usuario: $user_data['correo'],
+            nombre_usuario: $user_data['nombre'],
+            titulo_libro:   $libro_data['titulo'],
+            dias_atraso:    $dias_atraso,
+            fecha_limite:   $prestamo['fecha_devolucion_esperada']
+        );
+    }
+
+    // 5h. Redirección con contexto
     if ($es_extemporanea) {
         header("Location: gestionar_prestamos.php?msg=devolucion_extemporanea&dias=$dias_atraso");
     } else {
