@@ -16,6 +16,7 @@ session_start();
 require_once 'config/db.php';
 require_once 'csrf_helper.php';
 require_once 'rate_limiter.php';
+require_once 'notificaciones.php';
 
 // ── 1. Autenticación ─────────────────────────────────────────────────────────
 if (!isset($_SESSION['id_usuario'])) {
@@ -132,6 +133,29 @@ try {
     ]);
 
     $pdo->commit();
+
+    // Enviar correo de confirmación (fail-safe: no bloquea si falla el envío)
+    $stmt_user = $pdo->prepare("SELECT nombre, correo FROM usuarios WHERE id_usuario = :id LIMIT 1");
+    $stmt_user->execute(['id' => $id_usuario]);
+    $user_data = $stmt_user->fetch(PDO::FETCH_ASSOC);
+
+    $stmt_libro = $pdo->prepare(
+        "SELECT l.titulo FROM libros l
+         INNER JOIN ejemplares e ON e.id_libro = l.id_libro
+         WHERE e.id_ejemplar = :id LIMIT 1"
+    );
+    $stmt_libro->execute(['id' => $id_ejemplar]);
+    $libro_data = $stmt_libro->fetch(PDO::FETCH_ASSOC);
+
+    if ($user_data && $libro_data) {
+        notificar_prestamo_exitoso(
+            correo_usuario:   $user_data['correo'],
+            nombre_usuario:   $user_data['nombre'],
+            titulo_libro:     $libro_data['titulo'],
+            fecha_devolucion: $fecha_devolucion
+        );
+    }
+
     header("Location: catalogo.php?msg=prestamo_exitoso");
     exit();
 
