@@ -1,7 +1,15 @@
 <?php
 session_start();
 require_once 'config/db.php';
-require_once 'notificaciones_pantalla.php'; // [REQ-4] Sistema de alertas en pantalla
+
+// [REQ-4] Carga defensiva: si el archivo falla, el dashboard no muere
+if (file_exists(__DIR__ . '/notificaciones_pantalla.php')) {
+    require_once 'notificaciones_pantalla.php';
+} else {
+    // Fallback vacío para que renderizar_notificaciones_pantalla() no rompa
+    $notif_pantalla = ['proximos' => [], 'vencidos' => [], 'es_admin' => false];
+    function renderizar_notificaciones_pantalla(array $notif): void {}
+}
 
 if (!isset($_SESSION['id_usuario'])) {
     header("Location: index.php");
