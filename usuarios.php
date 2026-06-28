@@ -164,7 +164,9 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
                         </td>
                         <td>
                             <div style="display:flex; gap:6px;">
-                                <button class="action-btn" title="Editar"><i class="fas fa-pen"></i></button>
+                                <button type="button" class="action-btn" title="Editar" onclick="abrirModalEditar(<?php echo $user['id_usuario']; ?>, '<?php echo addslashes($user['nombre']); ?>', '<?php echo addslashes($user['boleta']); ?>', '<?php echo addslashes($user['correo']); ?>', <?php echo $user['id_rol']; ?>)">
+    <i class="fas fa-pen"></i>
+</button>
                                 <form action="acciones_usuario.php" method="POST" style="display:inline;">
                                     <input type="hidden" name="id_usuario" value="<?php echo $user['id_usuario']; ?>">
                                     <input type="hidden" name="accion" value="cambiar_estado">
@@ -187,52 +189,70 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
     </div>
 
     <!-- Modal -->
-    <div class="modal-overlay" id="userModal">
+    <div class="modal-overlay" id="editModal">
         <div class="modal-box">
             <div class="modal-head">
-                <h2><i class="fas fa-user-plus" style="font-size:1.1rem;"></i> Registrar Usuario</h2>
-                <button class="close-modal" onclick="closeModal()"><i class="fas fa-times"></i></button>
+                <h2><i class="fas fa-user-edit" style="font-size:1.1rem;"></i> Editar Usuario</h2>
+                <button class="close-modal" onclick="cerrarModalEditar()"><i class="fas fa-times"></i></button>
             </div>
-            <form action="guardar_usuario.php" method="POST">
+            <form action="actualizar_usuario.php" method="POST">
+                <input type="hidden" id="edit_id_usuario" name="id_usuario">
                 
                 <div class="form-group">
-                    <label class="form-label" for="nombre">NOMBRE COMPLETO</label>
-                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej. Juan Pérez" required>
+                    <label class="form-label" for="edit_nombre">NOMBRE COMPLETO</label>
+                    <input type="text" id="edit_nombre" name="nombre" class="form-control" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="boleta">NÚMERO DE BOLETA / EMPLEADO</label>
-                    <input type="text" id="boleta" name="boleta" class="form-control" placeholder="Ej. 2023602324" pattern="[0-9]+" title="Solo se permiten números" required>
+                    <label class="form-label" for="edit_boleta">NÚMERO DE BOLETA / EMPLEADO</label>
+                    <input type="text" id="edit_boleta" name="boleta" class="form-control" pattern="[0-9]+" title="Solo se permiten números" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="correo">CORREO ELECTRÓNICO</label>
-                    <input type="email" id="correo" name="correo" class="form-control" placeholder="usuario@alumno.ipn.mx" required>
+                    <label class="form-label" for="edit_correo">CORREO ELECTRÓNICO</label>
+                    <input type="email" id="edit_correo" name="correo" class="form-control" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="password">CONTRASEÑA TEMPORAL</label>
-                    <input type="password" id="password" name="password" class="form-control" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="id_rol">ROL EN EL SISTEMA</label>
-                    <select id="id_rol" name="id_rol" class="form-control" required>
+                    <label class="form-label" for="edit_id_rol">ROL EN EL SISTEMA</label>
+                    <select id="edit_id_rol" name="id_rol" class="form-control" required>
                         <option value="3">Usuario (Alumno/Docente)</option>
                         <option value="2">Bibliotecario</option>
                         <option value="1">Administrador</option>
                     </select>
                 </div>
                 
-                <button type="submit" class="btn-save"><i class="fas fa-save"></i> Guardar Usuario</button>
+                <button type="submit" class="btn-save"><i class="fas fa-sync-alt"></i> Actualizar Datos</button>
             </form>
         </div>
     </div>
 
     <script>
+        // Funciones del Modal de Nuevo Usuario
         function openModal()  { document.getElementById('userModal').classList.add('open'); }
         function closeModal() { document.getElementById('userModal').classList.remove('open'); }
         document.getElementById('userModal').addEventListener('click', function(e) {
             if (e.target === this) closeModal();
+        });
+
+        // Funciones del Modal de Editar Usuario
+        function abrirModalEditar(id, nombre, boleta, correo, id_rol) {
+            // Llenamos los campos con los datos del usuario seleccionado
+            document.getElementById('edit_id_usuario').value = id;
+            document.getElementById('edit_nombre').value = nombre;
+            document.getElementById('edit_boleta').value = boleta;
+            document.getElementById('edit_correo').value = correo;
+            document.getElementById('edit_id_rol').value = id_rol;
+            
+            // Mostramos el modal
+            document.getElementById('editModal').classList.add('open');
+        }
+        
+        function cerrarModalEditar() { 
+            document.getElementById('editModal').classList.remove('open'); 
+        }
+        
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModalEditar();
         });
     </script>
