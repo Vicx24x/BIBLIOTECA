@@ -194,25 +194,38 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
                 <button class="close-modal" onclick="closeModal()"><i class="fas fa-times"></i></button>
             </div>
             <form action="guardar_usuario.php" method="POST">
-                <div class="form-group">
-                    <label class="form-label">Nombre Completo</label>
-                    <input type="text" name="nombre" class="form-control" required placeholder="Ej. Juan Pérez">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Correo Electrónico</label>
-                    <input type="email" name="correo" class="form-control" required placeholder="usuario@ipn.mx">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Contraseña Temporal</label>
-                    <input type="password" name="password" class="form-control" required placeholder="Mínimo 6 caracteres">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Rol en el Sistema</label>
-                    <select name="id_rol" class="form-control" required>
-                        <option value="3">Usuario (Alumno/Docente)</option>
-                        <option value="2">Bibliotecario</option>
-                        <option value="1">Administrador</option>
-                    </select>
+             
+
+<div class="form-group">
+    <label for="nombre">NOMBRE COMPLETO</label>
+    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej. Juan Pérez" required>
+</div>
+
+<!-- NUEVO CAMPO: Número de Boleta -->
+<div class="form-group">
+    <label for="boleta">NÚMERO DE BOLETA / EMPLEADO</label>
+    <input type="text" id="boleta" name="boleta" class="form-control" placeholder="Ej. 2023602324" pattern="[0-9]+" title="Solo se permiten números" required>
+</div>
+
+<div class="form-group">
+    <label for="correo">CORREO ELECTRÓNICO</label>
+    <input type="email" id="correo" name="correo" class="form-control" placeholder="usuario@alumno.ipn.mx" required>
+</div>
+
+<div class="form-group">
+    <label for="password">CONTRASEÑA TEMPORAL</label>
+    <input type="password" id="password" name="password" class="form-control" required>
+</div>
+
+<div class="form-group">
+    <label for="id_rol">ROL EN EL SISTEMA</label>
+    <select id="id_rol" name="id_rol" class="form-control" required>
+        <!-- Asegúrate de que los values correspondan a los IDs de tu tabla roles -->
+        <option value="3">Usuario (Alumno/Docente)</option>
+        <option value="2">Bibliotecario</option>
+        <option value="1">Administrador</option>
+    </select>
+</div>
                 </div>
                 <button type="submit" class="btn-save"><i class="fas fa-save"></i> Guardar Usuario</button>
             </form>
