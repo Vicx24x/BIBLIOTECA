@@ -28,7 +28,6 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Usuarios — Biblioteca UPIICSA</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { font-family: 'DM Sans','Segoe UI',sans-serif; background: #f5f3ef; margin: 0; color: #1a1a2e; }
         .page-wrap { max-width: 1200px; margin: 0 auto; padding: 36px 32px 60px; }
@@ -102,15 +101,18 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
     </style>
 </head>
     <?php if (isset($_GET['update']) && $_GET['update'] === 'exito'): ?>
+    <div id="toast" style="position: fixed; top: 20px; right: 20px; background: #065f46; color: white; padding: 15px 25px; border-radius: 10px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.5s ease;">
+        <i class="fas fa-check-circle"></i> ¡Usuario actualizado correctamente!
+    </div>
     <script>
-        Swal.fire({
-            icon: 'success',
-            title: '¡Éxito!',
-            text: 'Usuario actualizado correctamente',
-            showConfirmButton: false,
-            timer: 2000
-        });
+        // Ocultar la notificación después de 3 segundos
+        setTimeout(() => {
+            document.getElementById('toast').style.display = 'none';
+        }, 3000);
     </script>
+    <style>
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    </style>
 <?php endif; ?>
 <body>
     <?php include 'header.php'; ?>
