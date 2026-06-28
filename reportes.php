@@ -95,8 +95,7 @@ try {
         .user-mini strong { display: block; font-size: 0.9rem; font-weight: 700; color: #111827; }
         .user-mini span { font-size: 0.78rem; color: #9ca3af; }
 
-        .mailto-btn { display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(135deg,var(--guinda,#850021),#5a0016); color: #fff; padding: 5px 12px; border-radius: 8px; text-decoration: none; font-size: 0.78rem; font-weight: 700; transition: all 0.2s; }
-        .mailto-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(133,0,33,0.3); }
+        
 
         .all-clear { display: flex; align-items: center; gap: 10px; background: #d1fae5; color: #065f46; padding: 16px 20px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; }
     </style>
@@ -190,7 +189,6 @@ try {
                         <th>Libro Retenido</th>
                         <th>Fecha Límite</th>
                         <th>Retraso</th>
-                        <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -208,11 +206,6 @@ try {
                             <span class="days-badge <?php echo $m['dias_retraso'] <= 3 ? 'warn' : ''; ?>">
                                 <i class="fas fa-clock"></i> <?php echo $m['dias_retraso']; ?> día(s)
                             </span>
-                        </td>
-                        <td>
-                            <a href="mailto:<?php echo htmlspecialchars($m['correo']); ?>?subject=Aviso de Retraso - BiblioMPS&body=Estimado/a <?php echo urlencode($m['nombre']); ?>, le recordamos que tiene un libro pendiente de devolución." class="mailto-btn">
-                                <i class="fas fa-envelope"></i> Enviar Aviso
-                            </a>
                         </td>
                     </tr>
                     <?php endforeach; ?>
