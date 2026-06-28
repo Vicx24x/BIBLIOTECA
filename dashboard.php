@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config/db.php';
+require_once 'notificaciones_pantalla.php'; // [REQ-4] Sistema de alertas en pantalla
 
 if (!isset($_SESSION['id_usuario'])) {
     header("Location: index.php");
@@ -375,6 +376,8 @@ $primer_nombre = explode(' ', $nombre_usuario)[0];
 </head>
 <body>
     <?php include 'header.php'; ?>
+
+    <?php renderizar_notificaciones_pantalla($notif_pantalla); // [REQ-4] ?>
 
     <div class="app-shell">
 
