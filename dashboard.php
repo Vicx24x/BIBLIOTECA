@@ -6,7 +6,6 @@ require_once 'config/db.php';
 if (file_exists(__DIR__ . '/notificaciones_pantalla.php')) {
     require_once 'notificaciones_pantalla.php';
 } else {
-    // Fallback vacío para que renderizar_notificaciones_pantalla() no rompa
     $notif_pantalla = ['proximos' => [], 'vencidos' => [], 'es_admin' => false];
     function renderizar_notificaciones_pantalla(array $notif): void {}
 }
