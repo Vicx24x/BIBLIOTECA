@@ -4,7 +4,7 @@ require_once 'config/db.php';
 
 // 1. Validar sesión
 if(!isset($_SESSION['rol']) || !isset($_SESSION['id_usuario'])) {
-    header("Location: login.php");
+    header("Location: index.php");
     exit;
 }
 
