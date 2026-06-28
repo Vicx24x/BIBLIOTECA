@@ -2,9 +2,11 @@
 session_start();
 require_once 'config/db.php';
 
-if (!isset($_SESSION['id_usuario']) || $_SESSION['rol'] !== 'Administrador') {
-    die("<div style='font-family:sans-serif;padding:40px;text-align:center;'><h2 style='color:#850021'>Acceso Denegado</h2><p>Solo los administradores pueden ver los reportes.</p><a href='dashboard.php' style='color:#850021;font-weight:700;'>← Volver al inicio</a></div>");
-}
+if(!isset($_SESSION['rol'])) {
+    // Si no ha iniciado sesión, lo mandamos al login
+    header("Location: login.php");
+    exit;
+}}
 
 try {
     $sql_usuarios = "SELECT r.nombre_rol, COUNT(u.id_usuario) as total 
