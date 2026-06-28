@@ -100,6 +100,20 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
         .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(133,0,33,0.35); }
     </style>
 </head>
+    <?php if (isset($_GET['update']) && $_GET['update'] === 'exito'): ?>
+    <div id="toast" style="position: fixed; top: 20px; right: 20px; background: #065f46; color: white; padding: 15px 25px; border-radius: 10px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.5s ease;">
+        <i class="fas fa-check-circle"></i> ¡Usuario actualizado correctamente!
+    </div>
+    <script>
+        // Ocultar la notificación después de 3 segundos
+        setTimeout(() => {
+            document.getElementById('toast').style.display = 'none';
+        }, 3000);
+    </script>
+    <style>
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    </style>
+<?php endif; ?>
 <body>
     <?php include 'header.php'; ?>
 
