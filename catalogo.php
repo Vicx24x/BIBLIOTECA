@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once 'config/db.php';
-
+require_once 'csrf_helper.php'; // <--- AGREGAR ESTA LÍNEA
 $estado = ['tipo' => null, 'mensaje' => ''];
 $estado_ui = [
     'prestamo_exitoso'   => ['bg' => '#d1fae5', 'color' => '#065f46', 'icono' => 'check-circle'],
@@ -433,11 +433,13 @@ try {
                                 <?php echo $libro['copias_disponibles']; ?> copia(s) disponible(s)
                             </div>
                             <form action="procesar_prestamo.php" method="POST">
-                                <input type="hidden" name="id_libro" value="<?php echo $libro['id_libro']; ?>">
-                                <button type="submit" class="btn-action btn-borrow">
-                                    <i class="fas fa-hand-holding-heart"></i> Solicitar Préstamo
-                                </button>
-                            </form>
+    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+    
+    <input type="hidden" name="id_libro" value="<?php echo $libro['id_libro']; ?>">
+    <button type="submit" class="btn-action btn-borrow">
+        <i class="fas fa-hand-holding-heart"></i> Solicitar Préstamo
+    </button>
+</form>
                         <?php else: ?>
                             <div class="copies-label unavailable">
                                 <i class="fas fa-exclamation-circle"></i> Agotado temporalmente
