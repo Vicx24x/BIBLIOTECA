@@ -181,15 +181,22 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
                                 <button type="button" class="action-btn" title="Editar" onclick="abrirModalEditar(<?php echo $user['id_usuario']; ?>, '<?php echo addslashes($user['nombre']); ?>', '<?php echo addslashes($user['boleta']); ?>', '<?php echo addslashes($user['correo']); ?>', <?php echo $user['id_rol']; ?>)">
     <i class="fas fa-pen"></i>
 </button>
-                                <form action="acciones_usuario.php" method="POST" style="display:inline;">
-                                    <input type="hidden" name="id_usuario" value="<?php echo $user['id_usuario']; ?>">
-                                    <input type="hidden" name="accion" value="cambiar_estado">
-                                    <?php if($user['estado']==='Activo'): ?>
-                                        <button type="submit" class="action-btn danger" title="Desactivar"><i class="fas fa-ban"></i></button>
-                                    <?php else: ?>
-                                        <button type="submit" class="action-btn success" title="Reactivar"><i class="fas fa-check-circle"></i></button>
-                                    <?php endif; ?>
-                                </form>
+                                <form action="acciones_usuario.php" method="POST" style="display:inline-block;">
+    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+    <input type="hidden" name="id_usuario" value="<?php echo $u['id_usuario']; ?>">
+    
+    <?php if($u['estado'] === 'Activo'): ?>
+        <input type="hidden" name="accion" value="desactivar">
+        <button type="submit" class="btn-desactivar" onclick="return confirm('¿Desactivar esta cuenta?');">
+            <i class="fas fa-ban"></i> Desactivar
+        </button>
+    <?php else: ?>
+        <input type="hidden" name="accion" value="activar">
+        <button type="submit" class="btn-activar" onclick="return confirm('¿Activar esta cuenta?');">
+            <i class="fas fa-check-circle"></i> Activar
+        </button>
+    <?php endif; ?>
+</form>
                             </div>
                         </td>
                     </tr>
