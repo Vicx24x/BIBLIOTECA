@@ -6,7 +6,7 @@ if(!isset($_SESSION['rol'])) {
     // Si no ha iniciado sesión, lo mandamos al login
     header("Location: login.php");
     exit;
-}}
+}
 
 try {
     $sql_usuarios = "SELECT r.nombre_rol, COUNT(u.id_usuario) as total 
