@@ -78,11 +78,7 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
 
         .action-btn { width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.15s; background: #f3f4f6; color: #6b7280; }
         .action-btn:hover { background: #e5e7eb; color: #111827; }
-        .action-btn.danger { background: #fee2e2; color: #991b1b; }
-        .action-btn.danger:hover { background: #fecaca; }
-        .action-btn.success { background: #d1fae5; color: #065f46; }
-        .action-btn.success:hover { background: #a7f3d0; }
-
+        
         /* Modal overlay */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
         .modal-overlay.open { display: flex; }
@@ -100,47 +96,45 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
         .btn-save { width: 100%; padding: 13px; background: linear-gradient(135deg,var(--guinda,#850021),#5a0016); color: #fff; border: none; border-radius: 10px; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
         .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(133,0,33,0.35); }
 
-
         /* ─── Estilos para Botones de Acción ─── */
-.btn-activar, .btn-desactivar {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 6px;
-    color: #ffffff;
-    font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease-in-out;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+        .btn-activar, .btn-desactivar {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
 
-.btn-activar {
-    background-color: #10b981; /* Verde esmeralda */
-}
+        .btn-activar {
+            background-color: #10b981; /* Verde esmeralda */
+        }
 
-.btn-activar:hover {
-    background-color: #059669;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
-}
+        .btn-activar:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+        }
 
-.btn-desactivar {
-    background-color: #ef4444; /* Rojo peligro */
-}
+        .btn-desactivar {
+            background-color: #ef4444; /* Rojo peligro */
+        }
 
-.btn-desactivar:hover {
-    background-color: #dc2626;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
-}
+        .btn-desactivar:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+        }
     </style>
-    
-    
 </head>
+<body>
     <?php if (isset($_GET['update']) && $_GET['update'] === 'exito'): ?>
     <div id="toast" style="position: fixed; top: 20px; right: 20px; background: #065f46; color: white; padding: 15px 25px; border-radius: 10px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.5s ease;">
         <i class="fas fa-check-circle"></i> ¡Usuario actualizado correctamente!
@@ -154,8 +148,8 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
     <style>
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
     </style>
-<?php endif; ?>
-<body>
+    <?php endif; ?>
+
     <?php include 'header.php'; ?>
 
     <div class="page-wrap">
@@ -168,14 +162,12 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
             <button class="btn-new" onclick="openModal()"><i class="fas fa-plus"></i> Nuevo Usuario</button>
         </div>
 
-        <!-- Stats -->
         <div class="stats-row">
             <div class="s-chip total"><i class="fas fa-users"></i> Total <span class="count"><?php echo count($lista_usuarios); ?></span></div>
             <div class="s-chip active"><i class="fas fa-check-circle"></i> Activos <span class="count"><?php echo $total_activos; ?></span></div>
             <div class="s-chip inactive"><i class="fas fa-ban"></i> Inactivos <span class="count"><?php echo $total_inactivos; ?></span></div>
         </div>
 
-        <!-- Table -->
         <div class="table-card">
             <div class="table-header">
                 <h2><i class="fas fa-id-card"></i> Directorio de Usuarios</h2>
@@ -218,27 +210,27 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
                             </span>
                         </td>
                         <td>
-                            <div style="display:flex; gap:6px;">
+                            <div style="display:flex; align-items: center; gap:6px;">
                                 <button type="button" class="action-btn" title="Editar" onclick="abrirModalEditar(<?php echo $user['id_usuario']; ?>, '<?php echo addslashes($user['nombre']); ?>', '<?php echo addslashes($user['boleta']); ?>', '<?php echo addslashes($user['correo']); ?>', <?php echo $user['id_rol']; ?>)">
-    <i class="fas fa-pen"></i>
-</button>
-                                <form action="acciones_usuario.php" method="POST" style="display:inline-block;">
-    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
-    
-    <input type="hidden" name="id_usuario" value="<?php echo $usuario['id_usuario']; ?>">
-    
-    <?php if($usuario['estado'] === 'Activo'): ?>
-        <input type="hidden" name="accion" value="desactivar">
-        <button type="submit" class="btn-desactivar" onclick="return confirm('¿Desactivar esta cuenta?');">
-            <i class="fas fa-ban"></i> Desactivar
-        </button>
-    <?php else: ?>
-        <input type="hidden" name="accion" value="activar">
-        <button type="submit" class="btn-activar" onclick="return confirm('¿Activar esta cuenta?');">
-            <i class="fas fa-check-circle"></i> Activar
-        </button>
-    <?php endif; ?>
-</form>
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                
+                                <form action="acciones_usuario.php" method="POST" style="margin: 0; display:inline-block;">
+                                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+                                    <input type="hidden" name="id_usuario" value="<?php echo $user['id_usuario']; ?>">
+                                    
+                                    <?php if($user['estado'] === 'Activo'): ?>
+                                        <input type="hidden" name="accion" value="desactivar">
+                                        <button type="submit" class="btn-desactivar" title="Desactivar Usuario" onclick="return confirm('¿Desactivar esta cuenta?');">
+                                            <i class="fas fa-ban"></i> Desactivar
+                                        </button>
+                                    <?php else: ?>
+                                        <input type="hidden" name="accion" value="activar">
+                                        <button type="submit" class="btn-activar" title="Activar Usuario" onclick="return confirm('¿Activar esta cuenta?');">
+                                            <i class="fas fa-check-circle"></i> Activar
+                                        </button>
+                                    <?php endif; ?>
+                                </form>
                             </div>
                         </td>
                     </tr>
@@ -251,7 +243,6 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
         </div>
     </div>
 
-    <!-- Modal -->
     <div class="modal-overlay" id="editModal">
         <div class="modal-box">
             <div class="modal-head">
@@ -294,9 +285,10 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
         // Funciones del Modal de Nuevo Usuario
         function openModal()  { document.getElementById('userModal').classList.add('open'); }
         function closeModal() { document.getElementById('userModal').classList.remove('open'); }
-        document.getElementById('userModal').addEventListener('click', function(e) {
+        // Si tuvieras el modal de nuevo usuario implementado, descomenta el evento click
+        /* document.getElementById('userModal').addEventListener('click', function(e) {
             if (e.target === this) closeModal();
-        });
+        }); */
 
         // Funciones del Modal de Editar Usuario
         function abrirModalEditar(id, nombre, boleta, correo, id_rol) {
@@ -319,3 +311,5 @@ $total_inactivos = count(array_filter($lista_usuarios, fn($u) => $u['estado'] !=
             if (e.target === this) cerrarModalEditar();
         });
     </script>
+</body>
+</html>
